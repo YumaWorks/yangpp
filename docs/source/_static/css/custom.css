@@ -1,0 +1,22 @@
+
+/* supposed to get rid of super-wide tables with horizontal scroll bars */
+.wy-table-responsive table td,
+.wy-table-responsive table th {
+    white-space: normal;
+}
+
+div.leftside {
+    width: 43%;
+    padding: 0px 3px 0px 0px;
+    float: left;
+}
+
+div.rightside {
+    margin-left: 45%;
+    /* float: right; */
+}
+
+/* Hide "On GitHub" section from versions menu (3) logged in and (2) if not */
+div.rst-versions > div.rst-other-versions > div.injected > dl:nth-child(2) {
+    display: none;
+}
