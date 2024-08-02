@@ -57,7 +57,10 @@ YANG is Not Relocatable
 YANG is not relocatable.
 The path strings for schema nodes or data nodes must be specified from root,
 or be relative to the context node determined by various complex rules.
-It is not possible to
+
+It is not possible to use path locations that are relative to
+an abstract definition (e.g., grouping) instead of referencing
+only the data tree.
 
 
 

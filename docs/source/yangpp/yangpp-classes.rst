@@ -37,12 +37,12 @@ but not both.
      -  :ref:`deprecated-stmt`
      -  0..1
 
-   * -  requires
-     -  :ref:`requires-stmt`
-     -  0..1
-
    * -  presence
      -  :rfc:`7950#section-7.5.5`
+     -  0..1
+
+   * -  key
+     -  :rfc:`7950#section-7.8.2`
      -  0..1
 
    * -  base-class
@@ -94,6 +94,10 @@ but not both.
      -  0..1
 
 
+
+
+
+
 The following ABNF is added to the YANG syntax:
 
 .. code-block:: abnf
@@ -102,8 +106,7 @@ The following ABNF is added to the YANG syntax:
                  "{" stmtsep
                      ;; these stmts can appear in any order
                      [deprecated-stmt]
-                     [requires-stmt]
-                     [presence-stmt]
+                     [presence-stmt / key-stmt]
                      [base-class-stmt / parent-class-stmt]
                      *virtual-stmt
                      *(typedef-stmt / grouping-stmt)
@@ -238,15 +241,6 @@ Example:
       status deprecated;
     }
 
-
-
-
-
-requires-stmt
-~~~~~~~~~~~~~~~~~~~~~~
-
-The 'requires' statement is used to declare external dependency information
-for the class.
 
 
 
@@ -499,23 +493,369 @@ parent-class-stmt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This statement is required if the class is not a base class.
-It identifies the class to use and also maps any keys and
-virtual objects.
-
--  There must be a 'map-key' substatement for each key that is inherited
-   from the parent class.
-
--  There must be a 'map-virtual' substatement for each mandatory
-   virtual object inherited from the parent class
-
--  There will be is a 'map-virtual' substatement for each implemented
-   optional virtual object inherited from the parent class
-
--  The 'map-path' syntax is TBD. Probably the same as 'path-stmt'.
-   It is a schema path string where the root is class root.
+It identifies the class to use and also maps any virtual objects.
+There SHOULD be a 'map-virtual' substatement for each
+virtual object inherited from the parent class
 
 
-### Example of Name Mapping
+
+**parent-class-stmt Substatements**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 50 25
+
+   * -  substatement
+     -  section
+     -  cardinality
+
+   * -  map-virtual
+     -  :ref:`map-virtual-stmt`
+     -  0..n
+
+   * -  description-stmt
+     -  :rfc:`7950#section-7.21.3`
+     -  0..1
+
+   * -  reference-stmt
+     -  :rfc:`7950#section-7.21.4`
+     -  0..1
+
+
+
+The following ABNF is added to the YANG syntax:
+
+.. code-block:: abnf
+
+    parent-class-stmt   = parent-class-keyword sep identifier-arg-str optsep
+                         (";" /
+                          "{" stmtsep
+                              ;; these stmts can appear in any order
+                              *map-virtual-stmt
+                              [description-stmt]
+                              [reference-stmt]
+                          "}") stmtsep
+
+
+
+map-virtual-stmt
++++++++++++++++++
+
+The 'map-virtual' statement is used to bind a virtual definition
+from the parent class to a concrete or virtual definition in the
+class being defined.
+
+-  The 'map-virtual' identifier-arg-str value from the parent class
+   is mapped to the identifier in the class being defined.
+
+-  If a virtual identifier from the parent class is not mapped, then it is not
+   removed from the class being defined.  Another derived class could
+   support the virtual node.
+
+
+
+**map-virtual-stmt Substatements**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 50 25
+
+   * -  substatement
+     -  section
+     -  cardinality
+
+   * -  map-path
+     -  :ref:`map-path-stmt`
+     -  1
+
+
+The following ABNF is added to the YANG syntax:
+
+.. code-block:: abnf
+
+    map-virtual-stmt   = map-virtual-keyword sep identifier-arg-str optsep
+                         "{" stmtsep
+                             map-path-stmt
+                         "}" stmtsep
+
+
+map-path-stmt
+%%%%%%%%%%%%%%%%%%%%
+
+
+The 'map-path' statement is used to bind a virtual definition
+from the parent class to a concrete or virtual definition in the
+class being defined.
+
+
+.. code-block:: abnf
+
+    map-path-stmt    = map-path-keyword sep map-path-arg-str stmtend
+
+    map-path-arg-str = < a string that matches the rule >
+                        < identifier-ref-arg / "<" identifier-arg-str ">" >
+
+
+
+virtual-stmt
+~~~~~~~~~~~~~~~~~
+
+The virtual-stmt is used to declare virtual objects in the class.
+
+If any virtual objects are declared then the class
+cannot be instantiated.  A derived class that does not contain
+and virtual objects must be used to create an instance
+of the class.
+
+The virtual-stmt is not followed by any keyword.
+
+-  Multiple virtual-stmt are allowed by no duplicate objects
+   can appear in any way.
+
+
+.. code-block:: yang
+
+       virtual {
+         // concrete class expected to map these statements
+         action reset;
+
+         action restart;
+
+         list list1 {
+           key name1;
+           leaf name1 { type string; }
+           // ...
+         }
+       }
+
+
+
+Virtual Node Name Placeholders
+++++++++++++++++++++++++++++++++++
+
+
+If the identifier value for the sub-statement is wrapped,
+then it is a name placeholder and a derived class that
+creates a concrete version must provide a :ref:`map-virtual-stmt`
+to assign a real name.
+
+
+.. code-block:: text
+
+    '<' identifier '>'
+
+Example:
+
+.. code-block:: yang
+   :emphasize-lines: 2
+
+     virtual {
+        action <reset>;
+     }
+
+
+**virtual-stmt Substatements**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 50 25
+
+   * -  substatement
+     -  section
+     -  cardinality
+
+   * -  container
+     -  :rfc:`7950#section-7.5`
+     -  0..n
+
+   * -  leaf
+     -  :rfc:`7950#section-7.6`
+     -  0..n
+
+   * -  leaf-list
+     -  :rfc:`7950#section-7.7`
+     -  0..n
+
+   * -  list
+     -  :rfc:`7950#section-7.8`
+     -  0..n
+
+   * -  choice
+     -  :rfc:`7950#section-7.9`
+     -  0..n
+
+   * -  action
+     -  :rfc:`7950#section-7.15`
+     -  0..n
+
+   * -  notification
+     -  :rfc:`7950#section-7.16`
+     -  0..n
+
+
+
+.. code-block:: abnf
+
+    virtual-stmt = virtual-keyword optsep
+                     "{" stmtsep
+                         ;; these stmts can appear in any order
+                         1*(container-stmt /
+                            leaf-stmt /
+                            leaf-list-stmt /
+                            list-stmt /
+                            choice-stmt /
+                            action-stmt /
+                            notification-stmt)
+                     "}" stmtsep
+
+
+
+
+
+uses-class-stmt
+---------------------
+
+
+
+
+YANG++ Class Examples
+-----------------------
+
+**Example Base Class:**
+
+.. code-block:: text
+
+    module base-mod {
+      // ..
+
+      class base1 {
+       virtual {
+         // concrete class expected to map these statements
+         action reset;
+
+         action restart;
+
+         list list1 {
+           key name1;
+           leaf name1 { type string; }
+           // ...
+         }
+       }
+
+       // this is a concrete list part of the base class
+       // and not replaced because it is not virtual
+       list list2 {
+         key name2;
+         leaf name2 { type string; }
+         // ...
+       }
+     }
+
+    }
+
+
+
+**Example Derived Class:**
+
+.. code-block:: text
+
+    module mybase-mod {
+      import base-mod { prefix base; }
+
+      // a class
+      class mybase1 {
+       parent-class base:base1;
+
+       // no virtual sections in this class makes it a concrete class
+
+       // a concrete definition for each 'vitual' definition is expected.
+       // if missing then a deviate (not-supported) is implied
+       action reset {
+         input {
+           leaf myparm1 { type string; }
+         }
+       }
+
+       action restart {
+         input {
+           leaf test-mode {
+             type boolean;
+             default false;
+           }
+         }
+       }
+
+       // this is a replacement of the virtual list list1
+       list list1 {
+         key my-name;
+         leaf my-name { type string; }
+         // ...
+       }
+
+       // list list2 is also present in an instance of this class
+       // the context node is the class root
+       augment "list2" {
+         leaf myleaf { type int8; }
+       }
+     }
+
+
+**Example Concrete Module:**
+
+.. code-block:: text
+
+       module base1-real {
+         // ...
+         import base-mod { prefix myb; }
+
+         // top-level /base1
+         uses-class myb:base1;
+       }
+
+Server YANG Library Mapping
+
+-  For each module that contains implemented classes,
+   a class entry is required in the yang-library update
+
+-  Maps real-class to lib-class
+
+.. code-block:: text
+
+      classes {
+        class [lib-class] {
+          lib-class /base-mod:base1
+          real-class /mybase-mod:mybase1
+        }
+      }
+      modules {
+       module base1-real;
+     }
+     imported-modules {
+       module base-mod;
+       module mybase-mod;
+     }
+
+
+
+Virtual objects created:
+
+- action /base1[name]/reset       mapped to mybase1::my-reset
+- action /base1[name]/restart     mapped to mybase1::my-restart
+- list   /base1[name]/list1       mapped to mybase1::my-list1
+- list   /base1[name]/list2       mapped to base1::list2
+
+Real objects created:
+
+- action /base1[name]/my-reset
+- action /base1[name]/my-restart
+- list   /base1[name]/my-list1
+- list   /base1[name]/list2
+
+
+
+YANG++ Name Mapping Examples
+++++++++++++++++++++++++++++++++
+
 
 Class Hierarchy:
 
@@ -529,7 +869,7 @@ Object Name Derivation:
 
 .. code-block:: text
 
-    <event> -> <system-event> -> my-event
+    <event> -> <system-event> -> example-system-event
 
 
 Example Base Class:
@@ -538,15 +878,17 @@ Example Base Class:
 
     class event {
        base-class object;
-       virtual mandatory {
+       virtual {
          notification <event>;
        }
-       // ...
     }
 
 
 
 Example Parent Class:
+
+-  This class replaces the 'event' virtual node with a
+   different virtual node 'system-event'.
 
 
 .. code-block:: text
@@ -555,12 +897,12 @@ Example Parent Class:
     class system-event {
        parent-class event {
          map-virtual event {
-           map-path /system-event;
+           map-path <system-event>;
          }
        }
 
        // this is a replacement of the virtual 'event'
-       virtual mandatory {
+       virtual {
           notification <system-event> {
              leaf event-type { type string; }
           }
@@ -568,20 +910,24 @@ Example Parent Class:
     }
 
 
-
 Example Derived Class:
+
+
+-  This class replaces the 'system-event' virtual node with a
+   concrete node 'example-system-event'.
+
 
 .. code-block:: text
 
     class my-system-event {
        parent-class system-event {
-         map-virtual system-event {
-           map-path /my-event;
+         map-virtual <system-event> {
+           map-path example-system-event;
          }
        }
 
        // this is a replacement of the virtual 'system-event'
-       notification my-event {
+       notification example-system-event {
          // leaf event-type is inherited from system-event class
          leaf my-data { type string; }
        }
@@ -640,255 +986,3 @@ the 'my-system-event2' class is used in the server:
          leaf my-extra-data { type string; }
        }
     }
-
-
-
-
-
-
-virtual-stmt
-~~~~~~~~~~~~~~~~~
-
-The virtual-stmt is used to declare virtual objects in the class.
-
-If any virtual objects are declared then the class
-cannot be instantiated.  A derived class that does not contain
-and virtual objects must be used to create an instance
-of the class.
-
-The virtual-stmt is followed by the REQUIRED field.
-
--  Multiple virtual-stmt are allowed by no duplicate objects
-   can appear in any way.
-
-The following values are defined:
-
-- mandatory: the virtual objects must be mapped. The datastore is
-  invalid if there are any unmapped mandatory virtual objects.
-
-- optional:the virtual objects are not present if not mapped.
-  This is similar to a false 'when-stmt' that removes a node
-  from the schema tree.
-
-Example:
-
-.. code-block:: text
-
-    virtual mandatory {
-      // derived class must map these statements
-      rpc reset;
-
-      list list1 {
-        key name1;
-        leaf name1 { type string; }
-        // ...
-      }
-    }
-
-    virtual optional {
-      // derived class may map these statements
-      rpc restart;
-    }
-
-
-
-
-
-
-
-uses-class-stmt
----------------------
-
-
-
-
-YANG++ Class Examples
------------------------
-
-.. code-block:: text
-
-      class NAME {
-
-        // standard fields: status, description, reference
-        // standard fields: if-feature, when-stmt, must-stmt
-
-        parent-class NAME {
-          map-virtual NAME {
-            // must be a top-level action, notification, or object
-            // that matches the virtual with the same name in
-            // the parent class
-            map-path PATH;
-          }
-
-        }
-
-        // if virtual objects in this class then must have
-        // a derived class to use an instance of the class
-        // REQUIRED = mandatory or optional
-        virtual REQUIRED {
-           action-stmt | notification-stmt | data-def-stmt
-        }
-
-        // action-stmt | notification-stmt | data-def-stmt
-
-        uses-class NAME {
-           // works like a regular uses-stmt
-           // TBD: refine-class-stmt
-        }
-
-      }
-
-
-
-**Example Base Class:**
-
-.. code-block:: text
-
-    module base-mod {
-      // ..
-
-      class base1 {
-       requires {
-          require-module foo-base {
-            min-revision 2020-01-01;
-          }
-       }
-
-       virtual mandatory {
-         // derived class must map these statements
-         rpc reset;
-
-         list list1 {
-           key name1;
-           leaf name1 { type string; }
-           // ...
-         }
-       }
-
-       virtual optional {
-         // derived class may map these statements
-         rpc restart;
-       }
-
-       // this is a concrete list part of the base class
-       // and not replaced because it is not virtual
-       list list2 {
-         key name2;
-         leaf name2 { type string; }
-         // ...
-       }
-     }
-
-    }
-
-
-
-**Example Derived Class:**
-
-.. code-block:: text
-
-    module mybase-mod {
-      import base-mod { prefix base; }
-
-      // a class
-      class mybase1 {
-       parent-class base:base1 {
-         map-key name {
-           map-path /my-list/my-name;
-         }
-         map-virtual reset1 {
-           map-path /my-reset;
-         }
-         map-virtual restart {
-           map-path /my-restart;
-         }
-         map-virtual list1 {
-           map-path /my-list1;
-         }
-       }
-
-       // no instance or empty instance-stmt in a derived class
-       // means no added keys to the parent class
-       instance;
-
-       // no virtual sections in this class makes it a concrete class
-
-
-       // this is a replacement of the virtual rpc reset
-       rpc my-reset {
-       }
-
-       // this is a replacement of the virtual rpc reset
-       rpc my-restart {
-         input {
-           leaf test-mode {
-             type boolean;
-             default false;
-           }
-         }
-       }
-
-       // this is a replacement of the virtual list list1
-       list my-list1 {
-         key my-name;
-         leaf my-name { type string; }
-         // ...
-       }
-
-        // list list2 is also present in an instance of this class
-        augment "/list2" {
-          leaf myleaf { type int8; }
-        }
-     }
-
-
-**Example Concrete Module:**
-
-.. code-block:: text
-
-       module base1-real {
-         // ...
-         import base-mod { prefix myb; }
-
-         // top-level /base1
-         uses-class myb:base1;
-       }
-
-Server YANG Library Mapping
-
--  For each module that contains implemented classes,
-   a class entry is required in the yang-library update
-
--  Maps real-class to lib-class
-
-.. code-block:: text
-
-      classes {
-        class [lib-class] {
-          lib-class /base-mod:base1
-          real-class /mybase-mod:mybase1
-        }
-      }
-      modules {
-       module base1-real;
-     }
-     imported-modules {
-       module base-mod;
-       module mybase-mod;
-     }
-
-
-
-Virtual objects created:
-
-- action /base1[name]/reset       mapped to mybase1::my-reset
-- action /base1[name]/restart     mapped to mybase1::my-restart
-- list   /base1[name]/list1       mapped to mybase1::my-list1
-- list   /base1[name]/list2       mapped to base1::list2
-
-Real objects created:
-
-- action /base1[name]/my-reset
-- action /base1[name]/my-restart
-- list   /base1[name]/my-list1
-- list   /base1[name]/list2

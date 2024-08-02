@@ -46,6 +46,8 @@ Each class definition has a class type, which is determined
 by the presence of the :ref:`base-class-stmt` or
 the :ref:`parent-class-stmt`.
 
+Each class definition within a YANG module defines a 'base class' or a 'derived class'.
+
 
 .. list-table::
    :header-rows: 1
@@ -112,6 +114,22 @@ in a derived class.  The first class that binds a real name
 to the object becomes the name of the object in the class API.
 
 
+Class Root
+-------------
+
+A YANG++ class is more structured than a grouping.
+It has a combination of properties from existing YANG constructs
+
+-  **grouping**:  a class is abstract like a grouping and requires
+   a corresponding 'uses' type of statement to create real schema nodes
+
+-  **mount point**:  a class root can be used in a position independent way
+   without rewriting XPath and path statements.  The class root is a real
+   data node just like a mount point.
+
+
+The :ref:`uses-class-stmt` is used to bind classes to actual schema tree nodes.
+
 Class Instances
 -----------------------
 
@@ -119,19 +137,47 @@ An instance of a class is not the same as the expansion
 of a grouping.
 
 There is a data node created with the name corresponding to
-the class named in the 'uses-class-stmt'. This is like a
-container node.
+the class named in the 'uses-class-stmt'.
 
-The 'presence' statement can be present to select between
-a presence container and a non-presence container.
+-  If a non-empty 'key' statement is present in the class then the class root
+   is a list with one or more key leafs.
 
--  If the 'presence' statement is used then the class instance
-   must be created somehow (by a client or the server) in order
-   for an instance of the class to be created.
+   .. code-block:: yang
 
--  If the 'presence' statement is not used then the class instance
-   is automatically created by server similar to
-   a non-presence container.
+       class address {
+         key "last-name first-name";
+         uses address;
+       }
+
+-  If an empty 'key' statement is present in the class then the class root
+   is a list with the integer index as the key.
+
+   .. code-block:: yang
+
+       class address {
+         key "";
+         uses address;
+       }
+
+-  If a 'presence' statement is present in the class then the class
+   root is a presence container.
+
+
+   .. code-block:: yang
+
+       class address {
+         presence "P-container";
+         uses address;
+       }
+
+-  If none of the 'presence' , 'key', or 'nokey' statements is present then
+   the class root is a non-presence container.
+
+   .. code-block:: yang
+
+       class address {
+         uses address;
+       }
 
 
 Class Lifecycle
@@ -165,13 +211,13 @@ It is possible in YANG++ to specify 3 different types of path strings
 
    -  Traditional schema tree path that is used
       in the 'augment' and 'deviation' statements.
-   -  The root node is the root of a datastore or a mount point.
+   -  The root node is the root of a datastore or a mount point within a datastore.
 
 -  Data Node Path:
 
    -  Traditional data tree path that is used
       in the 'path' statement.
-   -  The root node is the root of a datastore or a mount point.
+   -  The root node is the root of a datastore or a mount point within a datastore.
 
 -  Class Path:
 
@@ -180,10 +226,12 @@ It is possible in YANG++ to specify 3 different types of path strings
    -  The root node is the class root.
    -  The class root serves as the 'docroot' for the XPath context
       for the class.
-   -  The new 'map-path' statement is a Class Path
-   -  Syntax of a Class Path string is TBD
 
-      -  Prefer :rfc:`7951` style path strings instead of XPath
+
+YANG++ classes can always reference nodes in their own class (same as a grouping).
+However, it can also reference nodes in other classes using a 'class path'.
+
+The actual data node bindings are done with the :ref:`uses-class-stmt`.
 
 
 Class Path Syntax
@@ -244,12 +292,6 @@ on the value of another leaf in 'class-A' from 'mod1'.
 
     class class-B {
       base-class object;
-      requires {
-        require-module mod1 {
-          min-revision 20222-05-12;
-        }
-      }
-
       container top2 {
         leaf B {
           when "/mod1:class-A::top/A > 10";
