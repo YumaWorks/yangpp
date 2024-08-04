@@ -10,6 +10,14 @@ the YANG language.
 
 However it is much more structured and powerful than a grouping.
 
+YANG++ Design Goals
+----------------------
+
+The main goal of YANG++ is to introduce object-oriented YANG data modeling.
+
+-  Improve reusability
+-  Introduce :ref:`Position Independent YANG`
+
 
 New YANG Statements
 ---------------------

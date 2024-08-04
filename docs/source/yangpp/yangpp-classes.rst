@@ -322,7 +322,7 @@ The following ABNF is added to the YANG syntax:
                       < any-arg >
 
    any-arg          = action-keyword /
-                      detadef-keyword /
+                      datadef-keyword /
                       notification-keyword /
                       rpc-keyword
 
@@ -617,14 +617,14 @@ The virtual-stmt is not followed by any keyword.
 
        virtual {
          // concrete class expected to map these statements
-         action reset;
-
-         action restart;
+         action <reset> {
+           description
+             "Some sort of reset action is expected";
+         }
 
          list list1 {
            key name1;
            leaf name1 { type string; }
-           // ...
          }
        }
 
@@ -731,23 +731,12 @@ YANG++ Class Examples
       class base1 {
        virtual {
          // concrete class expected to map these statements
-         action reset;
-
-         action restart;
+         action <reset>;
 
          list list1 {
            key name1;
            leaf name1 { type string; }
-           // ...
          }
-       }
-
-       // this is a concrete list part of the base class
-       // and not replaced because it is not virtual
-       list list2 {
-         key name2;
-         leaf name2 { type string; }
-         // ...
        }
      }
 
@@ -764,39 +753,29 @@ YANG++ Class Examples
 
       // a class
       class mybase1 {
-       parent-class base:base1;
+       parent-class base:base1 {
+         map-virtual <reset> {
+           map-path example-reset;
+         }
+       }
 
        // no virtual sections in this class makes it a concrete class
 
        // a concrete definition for each 'vitual' definition is expected.
        // if missing then a deviate (not-supported) is implied
-       action reset {
+       action example-reset {
          input {
            leaf myparm1 { type string; }
          }
        }
 
-       action restart {
-         input {
-           leaf test-mode {
-             type boolean;
-             default false;
-           }
-         }
-       }
-
        // this is a replacement of the virtual list list1
        list list1 {
-         key my-name;
-         leaf my-name { type string; }
-         // ...
+         key name1;
+         leaf name1 { type string; }
+         leaf my-leaf2 { type string; }
        }
 
-       // list list2 is also present in an instance of this class
-       // the context node is the class root
-       augment "list2" {
-         leaf myleaf { type int8; }
-       }
      }
 
 
@@ -854,7 +833,7 @@ Real objects created:
 
 
 YANG++ Name Mapping Examples
-++++++++++++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Class Hierarchy:
