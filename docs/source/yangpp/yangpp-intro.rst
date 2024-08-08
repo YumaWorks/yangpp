@@ -178,7 +178,7 @@ the class named in the 'uses-class-stmt'.
          uses address;
        }
 
--  If none of the 'presence' , 'key', or 'nokey' statements is present then
+-  If neither of the 'presence' or 'key' statements is present then
    the class root is a non-presence container.
 
    .. code-block:: yang
@@ -200,8 +200,13 @@ The enumerations have the folowing meaning in YANG++:
 -  **current**: class definition is current and MUST be implemented
    if supported
 -  **deprecated**: class definition is deprecated and MUST be
-   implemented if supported. This class SHOULD be changed to 'obsolete'
-   status in the future.
+   implemented if supported.
+
+   -  This class SHOULD be changed to 'obsolete'
+      status in the future.
+
+   - A :ref:`deprecated-stmt` is expected to be present for this class
+
 -  **obsolete**: class definition is obsolete and MUST NOT be implemented
 
 
@@ -219,13 +224,15 @@ It is possible in YANG++ to specify 3 different types of path strings
 
    -  Traditional schema tree path that is used
       in the 'augment' and 'deviation' statements.
-   -  The root node is the root of a datastore or a mount point within a datastore.
+   -  The root node is the root of a datastore or a mount point
+      within a datastore.
 
 -  Data Node Path:
 
    -  Traditional data tree path that is used
       in the 'path' statement.
-   -  The root node is the root of a datastore or a mount point within a datastore.
+   -  The root node is the root of a datastore or a mount point
+      within a datastore.
 
 -  Class Path:
 
@@ -236,8 +243,9 @@ It is possible in YANG++ to specify 3 different types of path strings
       for the class.
 
 
-YANG++ classes can always reference nodes in their own class (same as a grouping).
-However, it can also reference nodes in other classes using a 'class path'.
+YANG++ classes can always reference nodes in their own class
+(same as a grouping). However, it can also reference nodes in
+other classes using a 'class path'.
 
 The actual data node bindings are done with the :ref:`uses-class-stmt`.
 
