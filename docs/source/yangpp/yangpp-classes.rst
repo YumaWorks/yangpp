@@ -407,8 +407,6 @@ The following values are supported:
 
 
 
-
-
 root base-class
 +++++++++++++++++++
 
@@ -591,7 +589,8 @@ from this class.
 
 **Example: Make an address list class**
 
-The 'us-address-list' class is a list using the existing leafs in the 'us-address' class
+The 'us-address-list' class is a list using the existing leafs in
+the 'us-address' class
 
 -  This class cannot be used with a :ref:`uses-class-stmt` unless the specified
    class has a 'key' statement that matches the implemented class.
@@ -805,6 +804,25 @@ The following schema nodes are created by the uses-class statement.
           +--rw city?         string
           +--rw zipcode?      string
 
+
+
+**Nested use-class**
+
+If this statement appears within a class definition, then it
+is a 'nested use-class' and the class binding information
+is not required.
+
+**Final use-class**
+
+If this statement appears as a plain 'data-def-stmt'
+then it is a 'final use-class' and the class binding information
+is required.
+
+A :ref:`bind-class-stmt` MUST be present for all classes
+referenced in any :ref:`Class Path String` sub-statements
+within the class being defined.
+
+
 **uses-class-stmt Substatements**
 
 
@@ -896,6 +914,113 @@ the ability to use the same class more than once as sibling nodes.
 
 bind-class-stmt
 ~~~~~~~~~~~~~~~~~
+
+This statement is used to bind a relative schema node reference
+in a :ref:`class path string`.  A 'final use-class' must provide
+this information so all path referenced can be resolved within
+the real schema tree.
+
+
+**bind-class-stmt Substatements**
+
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 50 25
+
+   * -  substatement     -  a class that has a parent-class
+
+     -  section
+     -  cardinality
+
+   * -  description
+     -  :rfc:`7950#section-7.21.3`
+     -  0..1
+
+   * -  path
+     -  :rfc:`7950#section-9.9.2`
+     -  1
+
+   * -  reference
+     -  :rfc:`7950#section-7.21.4`
+     -  0..1
+
+
+
+.. code-block:: abnf
+
+    bind-class-stmt   = bind-class-keyword sep identifier-arg-str optsep
+                        "{" stmtsep
+                            ;; these stmts can appear in any order
+                            path-stmt
+                            [description-stmt]
+                            [reference-stmt]
+                        "}" stmtsep
+
+
+
+**Example: Leafref to capabilities needs to be resolved**
+
+The 'push-caps' class is setup by the system:
+
+.. code-block:: yang
+
+    class push-caps {
+      leaf min-interval {
+        type uint32;
+        units centiseconds;
+      }
+      leaf max-segment-size {
+        type uint32;
+        units bytes;
+      }
+    }
+
+The class is used within a container named 'system'.
+The class root name is 'push-capabilities'.
+
+.. code-block:: yang
+
+    container system {
+      uses-class push-caps {
+        class-name "push-capabilities";
+      }
+    }
+
+Assume another class called 'push-settings' is defined
+that validates fields against the push capabilities.
+
+
+.. code-block:: yang
+
+    class push-settings {
+      leaf min-interval {
+        type uint32;
+        units centiseconds;
+        must ". >= /sys:push-caps::min-interval";
+      }
+      leaf max-segment-size {
+        type uint32;
+        units bytes;
+        must ". <= /sys:push-caps::max-segment-size";
+      }
+    }
+
+In order to use the 'push-settings' class in a final uses-class,
+a 'bind-class' statement must be provided:
+
+-  The 'path' is a plain schema-path string and identifies schema nodes.
+   The schema node name is 'push-capabilities' in this case.
+
+.. code-block:: yang
+
+    container settings {
+      uses-class push-settings {
+        bind-class sys:push-caps {
+          path "/sys:system/sys:push-capabilities";
+        }
+      }
+    }
 
 
 
