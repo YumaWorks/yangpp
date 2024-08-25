@@ -105,6 +105,97 @@ and the real classes used.
 TBD: multiple inheritance (i.e. multiple parent-class-stmt)
 
 
+Late Name Binding
+-------------------
+
+Whenever possible the path references within a class, either to itself
+or to other classes should be relative and relocatable.
+This requires some changes and improvements to the tools:
+
+-  Algorithmic linkage between the class being defined
+   and a referenced class. The :ref:`bind-class-stmt` is used
+   to link a referenced class to a specific class instance.
+
+-  Late assignment of the schema node name used for the class root.
+   The :ref:`class-name-stmt` is used within the :ref:`uses-class-stmt`
+   for this purpose.
+
+
+
+Class Name Binding
+---------------------------------
+
+A server is not required to implement the exact class
+that is specified in the model, called the 'specified class'.
+The actual class used is called the 'implemented class'.
+By default they are the same, but this is not required.
+A set of class name mappings is needed to properly expand
+the YANG++ schema implemented by a server in this case.
+
+A valid class name binding has the following properties:
+
+-  The implemented class is derived from the specified class
+-  The specified class root type must match the implemented
+   :ref:`class root type`
+
+   -  For lists, the 'key' statement must be the same in both
+      classes or the class does not match. If one class has
+      a 'key' statement then the other must also have one that
+      exactly matches.
+
+
+The YANG library is used for the module information.
+It needs to be extended with class name binding information.
+
+-  The actual classes used are expected to be advertised in
+   the YANG library for the server (TBD).
+
+-  It is also possible that the class name bindings could be specified
+   in a YANG Package.
+
+
+
+.. code-block:: text
+
+    specified class name  -> implemented class name
+
+Example:
+
+.. code-block:: text
+
+    address ->  us-address
+
+
+There are 2 types of class name bindings that can both be used
+for the same class name. They are checked in this order:
+
+-  **Object Level**:  The class binding is used for the
+   specified object node.
+
+   .. code-block:: yang
+
+       object-binding /system/address {
+         class-name us-address;
+       }
+
+
+-  **Class Level**:  The class binding is used for all
+   usage of the specified class.
+
+   .. code-block:: yang
+
+       class-binding address {
+         class-name us-address;
+       }
+
+
+If no class name binding is found then the specified class
+name is also the implemented class name.
+
+
+
+
+
 Virtual Objects
 -----------------
 
@@ -133,10 +224,26 @@ It has a combination of properties from existing YANG constructs
 
 -  **mount point**:  a class root can be used in a position independent way
    without rewriting XPath and path statements.  The class root is a real
-   data node just like a mount point.
+   schema node just like a mount point.
 
+The class root is an actual schema node in the object tree.
+The schema node type depends on the class root type.
+
+
+Class Root Type
+~~~~~~~~~~~~~~~~~~
+
+A class root can be one of 3 types of YANG schema nodes:
+
+-  presence container
+-  non-presence container
+-  list
 
 The :ref:`uses-class-stmt` is used to bind classes to actual schema tree nodes.
+The class root is the top-level schema node which conceptually replaces the
+'uses-class' statement.
+
+
 
 Class Instances
 -----------------------

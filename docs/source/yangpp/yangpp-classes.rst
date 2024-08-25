@@ -33,42 +33,6 @@ but not both.
      -  section
      -  cardinality
 
-   * -  deprecated
-     -  :ref:`deprecated-stmt`
-     -  0..1
-
-   * -  presence
-     -  :rfc:`7950#section-7.5.5`
-     -  0..1
-
-   * -  key
-     -  :rfc:`7950#section-7.8.2`
-     -  0..1
-
-   * -  base-class
-     -  :ref:`base-class-stmt`
-     -  0..1
-
-   * -  parent-class
-     -  :ref:`parent-class-stmt`
-     -  0..1
-
-   * -  virtual
-     -  :ref:`virtual-stmt`
-     -  0..n
-
-   * -  typedef
-     -  :rfc:`7950#section-7.3`
-     -  0..n
-
-   * -  grouping
-     -  :rfc:`7950#section-7.12`
-     -  0..n
-
-   * -  data-def-stmt
-     -  Several
-     -  0..n
-
    * -  any
      -  :ref:`any-stmt`
      -  0..n
@@ -77,23 +41,57 @@ but not both.
      -  :rfc:`7950#section-7.15`
      -  0..n
 
-   * -  notification
-     -  :rfc:`7950#section-7.16`
+   * -  base-class
+     -  :ref:`base-class-stmt`
+     -  0..1
+
+   * -  data-def-stmt
+     -  Several
      -  0..n
 
-   * -  status
-     -  :rfc:`7950#section-7.21.2`
+   * -  deprecated
+     -  :ref:`deprecated-stmt`
      -  0..1
 
    * -  description
      -  :rfc:`7950#section-7.21.3`
      -  0..1
 
+   * -  grouping
+     -  :rfc:`7950#section-7.12`
+     -  0..n
+
+   * -  key
+     -  :rfc:`7950#section-7.8.2`
+     -  0..1
+
+   * -  notification
+     -  :rfc:`7950#section-7.16`
+     -  0..n
+
+   * -  parent-class
+     -  :ref:`parent-class-stmt`
+     -  0..1
+
+   * -  presence
+     -  :rfc:`7950#section-7.5.5`
+     -  0..1
+
    * -  reference
      -  :rfc:`7950#section-7.21.4`
      -  0..1
 
+   * -  typedef
+     -  :rfc:`7950#section-7.3`
+     -  0..n
 
+   * -  virtual
+     -  :ref:`virtual-stmt`
+     -  0..n
+
+   * -  status
+     -  :rfc:`7950#section-7.21.2`
+     -  0..1
 
 
 
@@ -143,26 +141,26 @@ in the future.
      -  section
      -  cardinality
 
-   * -  replaced-by-stmt
-     -  :ref:`replaced-by-stmt`
-     -  0..n
-
-   * -  error-message
-     - :rfc:`7950#section-7.5.4.1`
+   * -  description
+     -  :rfc:`7950#section-7.21.3`
      -  0..1
 
    * -  error-app-tag
      - :rfc:`7950#section-7.5.4.2`
      -  0..1
 
-
-   * -  description-stmt
-     -  :rfc:`7950#section-7.21.3`
+   * -  error-message
+     - :rfc:`7950#section-7.5.4.1`
      -  0..1
 
-   * -  reference-stmt
+   * -  reference
      -  :rfc:`7950#section-7.21.4`
      -  0..1
+
+   * -  replaced-by
+     -  :ref:`replaced-by-stmt`
+     -  0..n
+
 
 
 
@@ -434,7 +432,7 @@ is expected to contain top-level objects as child data nodes .
 The class must be declared:
 
 .. code-block:: yang
-   :emphasize-lines: 4
+   :emphasize-lines: 2
 
     class config {
         base-class root;
@@ -475,14 +473,20 @@ This class represents a protocol message.
 It it similar to the 'structure' base-class but the indended use
 is for some sort of protocol message.
 
+-  An instance of this class has the same properties as an sx:structure.
+
+-  A protocol specification is expected to define any semantics
+   and usage context associated with this class.
+
 
 structure base-class
 ++++++++++++++++++++++++++++
 
 This class represents an abstract data structure.
 It corresponds to the 'sx:structure' schema node.
-An instance of this class has the same properties as an sx:structure.
 
+-  An instance of this class has the same properties as an sx:structure.
+-  There are no semantics or usage context defined for this class
 
 
 
@@ -509,13 +513,13 @@ virtual object inherited from the parent class
      -  section
      -  cardinality
 
+   * -  description
+     -  :rfc:`7950#section-7.21.3`
+     -  0..1
+
    * -  map-virtual
      -  :ref:`map-virtual-stmt`
      -  0..n
-
-   * -  description-stmt
-     -  :rfc:`7950#section-7.21.3`
-     -  0..1
 
    * -  reference-stmt
      -  :rfc:`7950#section-7.21.4`
@@ -535,6 +539,69 @@ The following ABNF is added to the YANG syntax:
                               [description-stmt]
                               [reference-stmt]
                           "}") stmtsep
+
+
+
+**Example: Adding leafs with a derived class**
+
+The 'address' class represents one generic address:
+
+.. code-block:: yang
+
+    class address {
+      leaf last-name {
+        type string;
+        description
+          "Last name of the person who is associated with this address";
+      }
+      leaf first-name {
+        type string;
+        description
+          "First name of the person who is associated with this address";
+      }
+      leaf street {
+        type string;
+        description "street address";
+      }
+      leaf city {
+        type string;
+        description "City address";
+      }
+    }
+
+
+The 'us-address' class has all the leafs as the parent class
+plus a zipcode, ordered after the last parent child node.
+
+.. code-block:: yang
+
+    class us-address {
+      parent-class address;
+
+      leaf zipcode {
+        type string { length "5 | 10"; }
+        description "zipcode";
+      }
+    }
+
+
+When the 'address' class is used with a :ref:`uses-class-stmt` statement
+the server MAY implement the 'address' class or any class that is derived
+from this class.
+
+**Example: Make an address list class**
+
+The 'us-address-list' class is a list using the existing leafs in the 'us-address' class
+
+-  This class cannot be used with a :ref:`uses-class-stmt` unless the specified
+   class has a 'key' statement that matches the implemented class.
+
+.. code-block:: yang
+
+    class us-address-list {
+      parent-class us-address;
+      key "last-name first-name";
+    }
 
 
 
@@ -664,8 +731,16 @@ Example:
      -  section
      -  cardinality
 
+   * -  action
+     -  :rfc:`7950#section-7.15`
+     -  0..n
+
    * -  container
      -  :rfc:`7950#section-7.5`
+     -  0..n
+
+   * -  choice
+     -  :rfc:`7950#section-7.9`
      -  0..n
 
    * -  leaf
@@ -678,14 +753,6 @@ Example:
 
    * -  list
      -  :rfc:`7950#section-7.8`
-     -  0..n
-
-   * -  choice
-     -  :rfc:`7950#section-7.9`
-     -  0..n
-
-   * -  action
-     -  :rfc:`7950#section-7.15`
      -  0..n
 
    * -  notification
@@ -714,6 +781,121 @@ Example:
 
 uses-class-stmt
 ---------------------
+
+This statement is similar to the YANG 'uses' statement, which conceptually
+expands a grouping in place of the 'uses' node in the schema tree.
+A class is conceptually expanded in the schema tree instead of a grouping.
+
+.. code-block:: yang
+   :emphasize-lines: 2
+
+    container system {
+      uses-class address;
+    }
+
+The following schema nodes are created by the uses-class statement.
+
+.. code-block:: text
+
+    +--rw system
+       +--rw address
+          +--rw last-name     string
+          +--rw first-name    string
+          +--rw street?       string
+          +--rw city?         string
+          +--rw zipcode?      string
+
+**uses-class-stmt Substatements**
+
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 50 25
+
+   * -  substatement
+     -  section
+     -  cardinality
+
+   * -  augment
+     -  :rfc:`7950#section-7.17`
+     -  0..n
+
+   * -  bind-class
+     -  :ref:`bind-class-stmt`
+     -  0..n
+
+   * -  class-name
+     -  :ref:`class-name-stmt`
+     -  0..1
+
+   * -  description
+     -  :rfc:`7950#section-7.21.3`
+     -  0..1
+
+   * -  if-feature
+     -  :rfc:`7950#section-7.20.2d`
+     -  0..n
+
+   * -  reference
+     -  :rfc:`7950#section-7.21.4`
+     -  0..1
+
+   * -  refine
+     -  :rfc:`7950#section-7.13.2`
+     -  0..n
+
+   * -  status-stmt
+     -  :rfc:`7950#section-7.21.2`
+     -  0..1
+
+   * -  when-stmt
+     -  :rfc:`7950#section-7.21.5`
+     -  0..1
+
+
+.. code-block:: abnf
+
+
+        uses-class-stmt = uses-class-keyword sep identifier-ref-arg-str optsep
+               (";" /
+                "{" stmtsep
+                    ;; these stmts can appear in any order
+                    [class-name-stmt]
+                    *bind-class-stmt
+                    [when-stmt]
+                    *if-feature-stmt
+                    [status-stmt]
+                    [description-stmt]
+                    [reference-stmt]
+                    *refine-stmt
+                    *uses-augment-stmt
+                 "}") stmtsep
+
+
+class-name-stmt
+~~~~~~~~~~~~~~~~~~~
+
+This statement is used to change the schema node name of the class root.
+Normally this is the same as the name of the specified class.
+A name can be specified instead, which allows customization and
+the ability to use the same class more than once as sibling nodes.
+
+**Example: Envelope with from-address and to-address sub-trees.**
+
+.. code-block:: yang
+
+    class envelope {
+      uses-class address {
+        class-name from-address;
+      }
+      uses-class address {
+        class-name to-address;
+      }
+    }
+
+
+bind-class-stmt
+~~~~~~~~~~~~~~~~~
 
 
 

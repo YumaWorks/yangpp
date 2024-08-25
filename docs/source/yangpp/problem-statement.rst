@@ -97,12 +97,3 @@ However many protocol messages are too complex for YANG, because an
 abstract **unnamed** node is present in the message pattern.
 The 'notification' message from :rfc:`5277` is an example of this
 type of message.
-
-
-Backward Compatibility Problems
-------------------------------------
-
-It is not possible to discover the minimum required revision at a granularity
-that is meaningful. A module-level indication is not sufficient and new
-mechanisms are needed to help mitigate the problems causes by
-non-backward-compatible changes to YANG modules.
