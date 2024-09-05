@@ -45,6 +45,10 @@ but not both.
      -  :ref:`base-class-stmt`
      -  0..1
 
+   * -  classref
+     -  :ref:`classref-stmt`
+     -  0..N
+
    * -  data-def-stmt
      -  Several
      -  0..n
@@ -107,6 +111,7 @@ The following ABNF is added to the YANG syntax:
                      [presence-stmt / key-stmt]
                      [base-class-stmt / parent-class-stmt]
                      *virtual-stmt
+                     *classref-stmt
                      *(typedef-stmt / grouping-stmt)
                      *(data-def-stmt / any-stmt)
                      *action-stmt
@@ -251,6 +256,7 @@ The 'any' statement is used to provide abstract nodes with are not named.
 -  This allows templates to be constructed.
 -  Does not represent a real schema node with a specific name like 'anydata'.
 -  Less specific than a virtual node and can include more than data nodes.
+-  Shares the same samespace as objects and notifications
 
 **Supported abstract statements**
 
@@ -773,6 +779,86 @@ Example:
                             action-stmt /
                             notification-stmt)
                      "}" stmtsep
+
+
+
+
+
+
+
+
+classref-stmt
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This statement is required if the class references any other classes.
+Referencing a class does not alter the schema tree like using a class
+with :ref:`uses-class-stmt`.
+
+Class references can be used instead of absolute or relative schema tree
+references:
+
+- path-stmt
+- when-stmt
+- must-stmt
+
+Since a class can be used in multiple objects, a reference point
+is needed to identify each usage within the class being defined.
+The :ref:`refpoint-stmt` is used to label each reference point
+so it can be mapped in a :ref:`uses-class-stmt`.
+
+
+**classref-stmt Substatements**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 50 25
+
+   * -  substatement
+     -  section
+     -  cardinality
+
+   * -  description
+     -  :rfc:`7950#section-7.21.3`
+     -  0..1
+
+   * -  if-feature-stmt
+     -  :rfc:`7950#section-7.20.2`
+     -  0..n
+
+   * -  reference-stmt
+     -  :rfc:`7950#section-7.21.4`
+     -  0..1
+
+   * -  refpoint
+     -  :ref:`refpoint-stmt`
+     -  1..n
+
+
+
+The following ABNF is added to the YANG syntax:
+
+.. code-block:: abnf
+
+    classref-stmt   = classref-keyword sep identifier-arg-str optsep
+                      "{" stmtsep
+                           ;; these stmts can appear in any order
+                           *if-feature-stmt
+                           *refpoint-stmt
+                           [description-stmt]
+                           [reference-stmt]
+                       "}" stmtsep
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
