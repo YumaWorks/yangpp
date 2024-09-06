@@ -843,7 +843,7 @@ The following ABNF is added to the YANG syntax:
                       "{" stmtsep
                            ;; these stmts can appear in any order
                            *if-feature-stmt
-                           *refpoint-stmt
+                           1*refpoint-stmt
                            [description-stmt]
                            [reference-stmt]
                        "}" stmtsep
@@ -856,7 +856,14 @@ The following ABNF is added to the YANG syntax:
 
 
 
+refpoint-stmt
+++++++++++++++++++
 
+This statement is used to declare a reference point within
+the :ref:`classref-stmt`.
+
+-  At least 1 'refpoint' must be defined for each :ref:`classref-stmt`
+-  The identifier-arg-str argument is a 'ynag-identifier'  string.
 
 
 
@@ -1154,7 +1161,7 @@ YANG++ Class Examples
 
        // no virtual sections in this class makes it a concrete class
 
-       // a concrete definition for each 'vitual' definition is expected.
+       // a concrete definition for each 'virtual' definition is expected.
        // if missing then a deviate (not-supported) is implied
        action example-reset {
          input {

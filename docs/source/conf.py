@@ -21,7 +21,7 @@ copyright = "2024, YumaWorks, Inc."
 author = "YumaWorks"
 
 # The base version, including alpha/beta/rc tags
-version = "aloha1"
+version = "alpha1"
 
 # The full version, including alpha/beta/rc tags
 # not going to mention release number in the title
@@ -90,9 +90,9 @@ html_static_path = ["_static"]
 
 # These paths are either relative to html_static_path
 # or fully qualified paths (eg. https://...)
-html_css_files = [
-    "css/custom.css",
-]
+# html_css_files = [
+#     "css/custom.css",
+# ]
 
 html_show_sourcelink = False
 
