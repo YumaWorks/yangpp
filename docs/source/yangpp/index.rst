@@ -6,5 +6,5 @@ YANG++ Language
    :maxdepth: 2
 
    problem-statement
-   yangpp-intro
-   yangpp-classes
+   introduction
+   classes
