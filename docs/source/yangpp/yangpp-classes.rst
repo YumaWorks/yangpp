@@ -935,8 +935,8 @@ within the class being defined.
      -  :ref:`bind-class-stmt`
      -  0..n
 
-   * -  class-name
-     -  :ref:`class-name-stmt`
+   * -  root-name
+     -  :ref:`root-name-stmt`
      -  0..1
 
    * -  description
@@ -971,7 +971,7 @@ within the class being defined.
                (";" /
                 "{" stmtsep
                     ;; these stmts can appear in any order
-                    [class-name-stmt]
+                    [root-name-stmt]
                     *bind-class-stmt
                     [when-stmt]
                     *if-feature-stmt
@@ -983,7 +983,7 @@ within the class being defined.
                  "}") stmtsep
 
 
-class-name-stmt
+root-name-stmt
 ~~~~~~~~~~~~~~~~~~~
 
 This statement is used to change the schema node name of the class root.
@@ -997,10 +997,10 @@ the ability to use the same class more than once as sibling nodes.
 
     class envelope {
       uses-class address {
-        class-name from-address;
+        root-name from-address;
       }
       uses-class address {
-        class-name to-address;
+        root-name to-address;
       }
     }
 
@@ -1076,7 +1076,7 @@ The class root name is 'push-capabilities'.
 
     container system {
       uses-class push-caps {
-        class-name "push-capabilities";
+        root-name "push-capabilities";
       }
     }
 

@@ -133,7 +133,7 @@ This requires some changes and improvements to the tools:
    to link a referenced class to a specific class instance.
 
 -  Late assignment of the schema node name used for the class root.
-   The :ref:`class-name-stmt` is used within the :ref:`uses-class-stmt`
+   The :ref:`root-name-stmt` is used within the :ref:`uses-class-stmt`
    for this purpose.
 
 
@@ -191,7 +191,7 @@ for the same class name. They are checked in this order:
    .. code-block:: yang
 
        object-binding /system/address {
-         class-name us-address;
+         root-name us-address;
        }
 
 
@@ -201,7 +201,7 @@ for the same class name. They are checked in this order:
    .. code-block:: yang
 
        class-binding address {
-         class-name us-address;
+         root-name us-address;
        }
 
 
@@ -398,7 +398,7 @@ the class name:
 
 .. code-block:: text
 
-     [ prefix ':' ] class-name '::' path
+     [ prefix ':' ] root-name '::' path
 
 .. container::
 
