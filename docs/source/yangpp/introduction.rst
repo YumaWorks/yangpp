@@ -10,28 +10,6 @@ the YANG language.
 
 However it is much more structured and powerful than a grouping.
 
-YANG++ Design Goals
-----------------------
-
-The main goal of YANG++ is to introduce object-oriented YANG data modeling.
-
--  Improve reusability
--  Introduce :ref:`Position Independent YANG`
-
-
-New YANG Statements
----------------------
-
-There are two new statements (plus sub-statements)
-
--  :ref:`class-stmt`: a top-level body-stmt like 'identity-stmt'.
--  :ref:`uses-class-stmt`: a data-def-stmt like 'uses-stmt'
-
-There is a YANG Library addition to advertise the class bindings
-used (e.g. by the server) to produce the expanded schema tree.
-
--  classes
-
 
 YANG++ Terminology
 -------------------------
@@ -63,40 +41,100 @@ YANG++ Terminology
         document root for the class instance
 
 
+YANG++ Design Goals
+----------------------
+
+The main goal of YANG++ is to introduce object-oriented YANG data modeling.
+This can change the way YANG data models are constructed.
+
+**Reusability**
+
+External references to objects outside the subtree being defined
+should be kept as position-independent as possible.  YANG++
+introduces :ref:`Position Independent YANG`,
+which supports class to class external references.
+
+The actual objects used in the external
+class reference are determined when the class is used
+with the "ref'`uses-class-stmt`.
+Regular schema tree external references are also supported,
+but such usage is not poistion-independent.
+
+**Extensibility**
+
+Classes can be easily extended and even deviated using
+a derived class.  This allows the abstract definitions
+to be customized. YANG 1.1 requires every usage of a grouping
+to be augmented, refined, and deviated.  YANG++ has the option
+to doing this at the abstract class level.
+
+**Improved Modeling**
+
+YANG++ classes allow abstract placeholder nodes to be
+defined with the "ref"`any-stmt`, to support structures
+such as message templates.
+
+Virtual nodes allow a class hierarchy to be defined with
+virtual actions, notifications, and objects, that are expected
+to be replaced and possibly "filled in" with real definitions
+by a derived class.
+This is similar to a YANG 1.1 empty choice, which other modules
+are expected to augment with 'case' statements.
+
+
+
+New YANG Statements
+---------------------
+
+There are two new statements (plus sub-statements)
+
+-  :ref:`class-stmt`: a top-level body-stmt like 'identity-stmt'.
+-  :ref:`uses-class-stmt`: a data-def-stmt like 'uses-stmt'
+
+There is a YANG Library addition to advertise the class bindings
+used (e.g. by the server) to produce the expanded schema tree.
+
+-  classes (TBD)
+
+
 
 Class Types
 ---------------
 
+There are 4 types of classes defined:
+
+-  **root** : configuration root with top-level YANG data schema nodes
+   as child nodes
+
+   -  :ref:`root base-class`
+
+-  **object** : YANG data-def-stmt node
+
+   -  :ref:`object base-class` (default)
+
+-  **message**: Abstract structure representing a protocol message
+
+   -  :ref:`message base-class`
+
+
+-  **structure**: Abstract structure representing an 'sx:structure'
+
+   -  :ref:`structure base-class`
+
 Each class definition has a class type, which is determined
 by the presence of the :ref:`base-class-stmt` or
 the :ref:`parent-class-stmt`.
+Each class definition within a YANG module defines a 'base class'
+or a 'derived class'.
 
-Each class definition within a YANG module defines a 'base class' or a 'derived class'.
+-  If a :ref:`base-class-stmt` is present then the class being defined
+   is a base class with the specified class type.
 
+-  If a :ref:`parent-class-stmt` is present then the class being defined
+   is a derived class with the specified parent class.
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 20 60
-
-   * -  base-class present
-     -  parent-class present
-     -  outcome
-
-   * -  no
-     -  no
-     -  Base Class with :ref:`object base-class`
-
-   * -  yes
-     -  no
-     -  Base Class with specified base-class
-
-   * -  no
-     -  yes
-     -  Derived Class with inherited base-class
-
-   * -  yes
-     -  yes
-     -  **Error**
+-  If neither statement is present then the class being defined
+   is a base class with the :ref:`object base-class`.
 
 
 
@@ -129,7 +167,7 @@ or to other classes should be relative and relocatable.
 This requires some changes and improvements to the tools:
 
 -  Algorithmic linkage between the class being defined
-   and a referenced class. The :ref:`bind-class-stmt` is used
+   and a referenced class. The :ref:`bind-classref-stmt` is used
    to link a referenced class to a specific class instance.
 
 -  Late assignment of the schema node name used for the class root.
@@ -372,16 +410,21 @@ YANG++ classes can always reference nodes in their own class
 (same as a grouping). However, it can also reference nodes in
 other classes using a 'class path'.
 
-The actual data node bindings are done with the :ref:`uses-class-stmt`.
-
+Example:
 
 Class Path String
 ~~~~~~~~~~~~~~~~~~~
 
 
 A plain 'path', 'must' or 'when' expression is always
-relative to the 'root' node.  These path strings are
-not relative to the class root.
+relative to the 'root' node.  Class path strings are
+not relative to the document root. Instead they are
+relative to the specified class reference point.
+
+-  Use the :ref:`classref-stmt` in the :ref:`class-stmt`
+   to declare the reference point.
+-  Use the :ref:`bind-classref-stmt` in the :ref:`uses-class-stmt`
+   to bind the reference point to the schema tree.
 
 Since a class root is a real data node the 'uses-class'
 statement can be placed anywhere with consistent predictable
@@ -389,22 +432,24 @@ results, unlike the parent of a 'uses' statement.
 The parent of any statements in the class is the class root.
 
 **Only the first path segment is changed.**
-If this segment identifies a class, then the 'path' string that
-follows is relative to that class root. The actual schema tree
+In each XPath 'expr', if this segment identifies a class reference point,
+then the 'path' string that follows is relative to that class root.
+The actual schema tree
 root is determined when the class is used.
 
 A class-relative expression begins with a special string containing
-the class name:
+the class name and the reference point name:
 
 .. code-block:: text
 
-     [ prefix ':' ] root-name '::' path
+     [ prefix ':' ] class-name '::'  classref '/' path
 
 .. container::
 
    .. note::
 
-      -  The 'path' does not include the class root name
+      -  The 'path' does not include the class root name.
+         Instead the reference point name is used.
       -  The 'path' is a relative-path not absolute-path
 
 
@@ -412,9 +457,9 @@ Examples:
 
 .. code-block:: text
 
-     addr:address::last-name
+     addr:address::user-address/last-name
 
-     us-address::zipcode
+     us-address::mgmt-addr/zipcode
 
 
 A Class Path string is position-independent.
@@ -442,9 +487,12 @@ on the value of another leaf in 'class-A' from 'mod1'.
 
 
     class class-B {
+      classref "mod1:class-A::test" {
+        description "An example test reference point";
+      }
       container top2 {
         leaf B {
-          when "/mod1:class-A::top/A > 10";
+          when "/mod1:class-A::test/top/A > 10";
           type int32;
         }
       }
@@ -462,14 +510,15 @@ defined in the 'addr' module.
 .. code-block:: yang
 
     class person-name {
+      classref "addr:address:addr";
       leaf last {
         type leafref {
-          path "addr:address::last-name";
+          path "addr:address::addr/last-name";
         }
       }
       leaf first {
         type leafref {
-          path "addr:address::first-name";
+          path "addr:address::addr/first-name";
         }
       }
     }

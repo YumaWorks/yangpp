@@ -5,7 +5,7 @@
 YANG++ Classes
 ==================
 
-A YANG++ class is an abstract modeling component, like the 'grouping'.
+A YANG++ class is an abstract modeling component, like the YANG 'grouping'.
 However it is much more structured and powerful than a grouping.
 
 
@@ -19,8 +19,19 @@ The **class** statement is used like a grouping.
 It must be used somewhere in the schema tree to create accessible schema nodes,
 with the :ref:`uses-class-stmt`.
 
-The :ref:`base-class-stmt` or :ref:`parent-class-stmt` must be present,
-but not both.
+**Usage**
+
+-  The :ref:`base-class-stmt` or :ref:`parent-class-stmt` can be present,
+   but not both.
+
+-   A :ref:`classref-stmt` must be present for each external class
+    reference done within the class being defined.
+-   A special path syntax identifying the reference point is used in
+    these statements:
+
+    - must-stmt
+    - when-stmt
+    - path-stmt
 
 
 **class-stmt Substatements**
@@ -702,8 +713,7 @@ The virtual-stmt is not followed by any keyword.
 
 
 
-Virtual Node Name Placeholders
-++++++++++++++++++++++++++++++++++
+**Virtual Node Name Placeholders**
 
 
 If the identifier value for the sub-statement is wrapped,
@@ -803,8 +813,9 @@ references:
 
 Since a class can be used in multiple objects, a reference point
 is needed to identify each usage within the class being defined.
-The :ref:`refpoint-stmt` is used to label each reference point
-so it can be mapped in a :ref:`uses-class-stmt`.
+Each 'classref' statement defines a reference point.
+The :ref:`class path string` is used to declare a reference point.
+
 
 
 **classref-stmt Substatements**
@@ -829,10 +840,6 @@ so it can be mapped in a :ref:`uses-class-stmt`.
      -  :rfc:`7950#section-7.21.4`
      -  0..1
 
-   * -  refpoint
-     -  :ref:`refpoint-stmt`
-     -  1..n
-
 
 
 The following ABNF is added to the YANG syntax:
@@ -840,30 +847,13 @@ The following ABNF is added to the YANG syntax:
 .. code-block:: abnf
 
     classref-stmt   = classref-keyword sep identifier-arg-str optsep
-                      "{" stmtsep
-                           ;; these stmts can appear in any order
-                           *if-feature-stmt
-                           1*refpoint-stmt
-                           [description-stmt]
-                           [reference-stmt]
-                       "}" stmtsep
-
-
-
-
-
-
-
-
-
-refpoint-stmt
-++++++++++++++++++
-
-This statement is used to declare a reference point within
-the :ref:`classref-stmt`.
-
--  At least 1 'refpoint' must be defined for each :ref:`classref-stmt`
--  The identifier-arg-str argument is a 'ynag-identifier'  string.
+                      (";" /
+                       "{" stmtsep
+                            ;; these stmts can appear in any order
+                            *if-feature-stmt
+                            [description-stmt]
+                            [reference-stmt]
+                        "}" ) stmtsep
 
 
 
@@ -899,6 +889,7 @@ The following schema nodes are created by the uses-class statement.
 
 
 
+
 **Nested use-class**
 
 If this statement appears within a class definition, then it
@@ -911,9 +902,10 @@ If this statement appears as a plain 'data-def-stmt'
 then it is a 'final use-class' and the class binding information
 is required.
 
-A :ref:`bind-class-stmt` MUST be present for all classes
-referenced in any :ref:`Class Path String` sub-statements
-within the class being defined.
+A :ref:`bind-classref-stmt` is needed for all classes
+referenced in the class being used in
+:ref:`Class Path String` sub-statements
+within the class.
 
 
 **uses-class-stmt Substatements**
@@ -931,8 +923,8 @@ within the class being defined.
      -  :rfc:`7950#section-7.17`
      -  0..n
 
-   * -  bind-class
-     -  :ref:`bind-class-stmt`
+   * -  bind-classref
+     -  :ref:`bind-classref-stmt`
      -  0..n
 
    * -  root-name
@@ -972,7 +964,7 @@ within the class being defined.
                 "{" stmtsep
                     ;; these stmts can appear in any order
                     [root-name-stmt]
-                    *bind-class-stmt
+                    *bind-classref-stmt
                     [when-stmt]
                     *if-feature-stmt
                     [status-stmt]
@@ -1005,16 +997,30 @@ the ability to use the same class more than once as sibling nodes.
     }
 
 
-bind-class-stmt
-~~~~~~~~~~~~~~~~~
+bind-classref-stmt
+~~~~~~~~~~~~~~~~~~~~~
 
 This statement is used to bind a relative schema node reference
 in a :ref:`class path string`.  A 'final use-class' must provide
 this information so all path referenced can be resolved within
 the real schema tree.
 
+-  A corresponding :ref:`classref-stmt` must be found in the
+   class being used, or the binding cannot be completed.
 
-**bind-class-stmt Substatements**
+
+.. container::
+
+   .. note::
+
+      -  The :ref:`uses-class-stmt` can only safely provide refpoint
+         bindings for the specified class, not the implemented class
+      -  TBD: Additional or changed 'bind-refpoint' definitions
+         in a different implemented class need to be handled somehow.
+
+
+
+**bind-classref-stmt Substatements**
 
 
 .. list-table::
@@ -1042,7 +1048,7 @@ the real schema tree.
 
 .. code-block:: abnf
 
-    bind-class-stmt   = bind-class-keyword sep identifier-arg-str optsep
+    bind-classref-stmt   = bind-classref-keyword sep identifier-arg-str optsep
                         "{" stmtsep
                             ;; these stmts can appear in any order
                             path-stmt
@@ -1087,15 +1093,19 @@ that validates fields against the push capabilities.
 .. code-block:: yang
 
     class push-settings {
+      classref "sys:push-caps::syscaps" {
+        description "System capabilities to use";
+      }
+
       leaf min-interval {
         type uint32;
         units centiseconds;
-        must ". >= /sys:push-caps::min-interval";
+        must ". >= /sys:push-caps::syscaps/min-interval";
       }
       leaf max-segment-size {
         type uint32;
         units bytes;
-        must ". <= /sys:push-caps::max-segment-size";
+        must ". <= /sys:push-caps::syscaps/max-segment-size";
       }
     }
 
@@ -1109,7 +1119,7 @@ a 'bind-class' statement must be provided:
 
     container settings {
       uses-class push-settings {
-        bind-class sys:push-caps {
+        bind-classref sys:push-caps::syscaps {
           path "/sys:system/sys:push-capabilities";
         }
       }
