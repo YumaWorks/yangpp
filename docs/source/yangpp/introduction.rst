@@ -47,6 +47,31 @@ YANG++ Design Goals
 The main goal of YANG++ is to introduce object-oriented YANG data modeling.
 This can change the way YANG data models are constructed.
 
+**Ease of Use**
+
+YANG models are constructed from many modules, often from different sources.
+Real devices have a complex collection of modules:
+
+- standard modules from an SDO
+- vendor modules that augment and/or deviate standard modules
+- vendor modules
+- vendor deviations
+
+.. container::
+
+   .. note::
+
+      -  Augments and deviations are applied seperately to the final objects
+      -  Grouping are expanded and refined separately at each use.
+
+
+-  It is diffficult and expensive to design and maintain all these YANG modules.
+-  It is even more difficult for client applications to use the high level
+   functionality from all the YANG library modules.
+-  It would be simpler to use an object-oriented class hierarchy instead of
+   a complex set of augments, refines, and deviations
+
+
 **Reusability**
 
 External references to objects outside the subtree being defined
