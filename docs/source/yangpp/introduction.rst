@@ -52,20 +52,19 @@ This can change the way YANG data models are constructed.
 YANG models are constructed from many modules, often from different sources.
 Real devices have a complex collection of modules:
 
-- standard modules from an SDO
+- standard modules from multiple SDOs
 - vendor modules that augment and/or deviate standard modules
 - vendor modules
-- vendor deviations
-
-.. container::
-
-   .. note::
-
-      -  Augments and deviations are applied seperately to the final objects
-      -  Grouping are expanded and refined separately at each use.
+- vendor product-specific deviations
 
 
--  It is diffficult and expensive to design and maintain all these YANG modules.
+It is desirable to create new functionality
+from existing building blocks:
+
+-  It is difficult and expensive to design and maintain all these YANG modules.
+-  It is difficult to achieve consistent model behavior if all the
+   augmentations, refinements, and deviations have to be specified
+   separately for each expansion of a grouping, and not the grouping itself.
 -  It is even more difficult for client applications to use the high level
    functionality from all the YANG library modules.
 -  It would be simpler to use an object-oriented class hierarchy instead of
@@ -80,10 +79,10 @@ introduces :ref:`Position Independent YANG`,
 which supports class to class external references.
 
 The actual objects used in the external
-class reference are determined when the class is used
+class reference can be determined when the class is used
 with the "ref'`uses-class-stmt`.
 Regular schema tree external references are also supported,
-but such usage is not poistion-independent.
+but such usage is not position-independent.
 
 **Extensibility**
 
@@ -93,20 +92,239 @@ to be customized. YANG 1.1 requires every usage of a grouping
 to be augmented, refined, and deviated.  YANG++ has the option
 to doing this at the abstract class level.
 
-**Improved Modeling**
+-  YANG 1.1 requires that a designer create a new grouping
+   that includes and changes the base grouping
+
+.. code-block:: yang
+
+    grouping std-grouping {
+      // ...
+    }
+
+    grouping my-grouping {
+      uses std-grouping;
+      leaf my-extra-leaf {
+        // ...
+      }
+    }
+
+One problem is that every location the 'std-grouping' is used,
+the module is changed to use 'my-grouping' instead.
+
+.. code-block:: yang
+   :emphasize-lines: 3, 8
+
+     // OLD:
+     container std-parms {
+       uses std-grouping;
+     }
+
+     // NEW:
+     container std-parms {
+       uses my-grouping;
+     }
+
+
+This is often unacceptable and/or impractical.
+
+YANG++ classes allows this sort of extensibility
+without changing any of the 'uses' statements.
+
+.. code-block:: yang
+   :emphasize-lines: 13 - 16
+
+    class std-grouping {
+      // ...
+    }
+
+    class my-grouping {
+      parent-class std-grouping;
+      leaf my-extra-leaf {
+        // ...
+      }
+    }
+
+     container std-parms {
+       // since match is derived-from-or-self both
+       // std-grouping and my-grouping are allowed
+       // YANG library indicates any class mappings
+       uses-class std-grouping;
+     }
+
+
+**Abstract Schema Nodes: Message Templating**
 
 YANG++ classes allow abstract placeholder nodes to be
 defined with the "ref"`any-stmt`, to support structures
 such as message templates.
 
-Virtual nodes allow a class hierarchy to be defined with
-virtual actions, notifications, and objects, that are expected
+This statement may only be applicable to the 'message'
+base class.  It represents an un-named schema node
+but no further schema information (i.e. derived class)
+will be available, so a virtual node cannot be used.
+
+For example, the 'notification' message header defined in
+:rfc:`5277` can be defined with a simple YANG++ class:
+
+.. code-block:: yang
+   :emphasize-lines: 11
+
+    class notification {
+      base-class message;
+
+      leaf eventTime {
+        type yang:date-and-time;
+        mandatory true;
+        description
+          "Timestamp from RFC 5277.";
+      }
+
+      any notification {
+        mandatory true;
+        description
+          "An abstract placeholder for a representation of
+           any notification-stmt.";
+      }
+    }
+
+
+**Virtual Objects**
+
+:ref:`Virtual objects` allow a class hierarchy to be defined with
+virtual actions, notifications, and data definitions, that are expected
 to be replaced and possibly "filled in" with real definitions
 by a derived class.
-This is similar to a YANG 1.1 empty choice, which other modules
+
+This is sometimes similar to a YANG 1.1 empty choice, which other modules
 are expected to augment with 'case' statements.
 
+-  A derived class can add to the virtual node when a concrete node
+   is defined.  This is similar to 'augments' but much simpler to use.
 
+-  Un-named virtual nodes are supported, which allow the concrete
+   node to have a different name than the virtual node.
+
+-  If a :ref:`uses-class-stmt` specifies a class with any virtual
+   objects in it, then a :ref:`class name binding` for a concrete
+   class MUST exist in the YANG library configuration.
+
+-  A concrete object cannot be changed to a virtual object in a derived class.
+
+-  A virtual object cannot be mapped to another virtual object.
+
+-  If any virtual objects are not defined in the derived class
+   then the derived class is also a virtual class.  The virtual
+   nodes are passed through to the next derived class.
+
+-  Properties can be added by a derived concrete object.
+
+-  Any changes to the inherited virtual or concrete objects
+   need to be allowed with 'refine' and/or 'deviation' statements
+   within the :ref:`parent-class-stmt`.
+
+-  Variations from the inherited virtual object without any
+   such statements are treated as errors.
+
+-  TBD: Use warnings instead of strict rules for NBC changes
+
+-  TBD: complex nested templates with deep virtual objects
+
+Example: Abstract class represents a Contact entry in a phone book.
+
+.. code-block:: yang
+
+   class ContactTemplate {
+     virtual {
+       container <identity> {
+         description
+           "Container with the fields representing the
+            identity of the contact. The container can have
+            any name valid for the context, that does not conflict
+            with any sibling node names.";
+       }
+       container contact-info {
+         description
+           "Container with the fields representing the
+            contact information for the person with
+            the associated <identity> information.
+            The container must be named 'contact-info'.";
+       }
+     }
+   }
+
+
+A derived class is needed which resolves the virtual objects.
+
+-  A :ref:`map-virtual-stmt` is needed for the ``<identity>``
+   mapping to a concrete object name.
+
+-  This mapping is not needed for the ``contact-info`` container
+   since a name change is not allowed.
+
+
+.. code-block:: yang
+
+    class Contact {
+      parent-class ContactTemplate {
+        map-virtual <identity> {
+          map-path name;
+        }
+      }
+
+      container name {
+        leaf first-name { type string;
+        leaf last-name { type string; }
+      }
+
+      container contact-info {
+        leaf email-address {
+          type string;
+        }
+      }
+    }
+
+In this example, a :ref:`class name binding` must be
+configured to map the 'Contact' class to the 'ContactTemplate' class.
+
+.. code-block:: yang
+
+    container sysadmin-contact {
+      uses-class ContactTemplate;
+    }
+
+
+
+A new abstract class can be created which uses this class:
+
+.. code-block:: yang
+
+    class ContactList {
+      list contacts {
+        autokey;
+        uses-class ContactTemplate;
+      }
+    }
+
+
+
+**Containment and Model Structure**
+
+YANG 1.1 allows every type of statement to appear in any module.
+There are no rules or even guidelines for the organization
+of modules that augment and deviate a base model.
+
+It is often difficult to tell where all the data definitions
+for the expanded schema tree are located.  They are scattered
+across any number of modules.  The YANG++ class hierarchy
+allows these definitions to be defined in one place.
+
+
+**Standard API Library**
+
+The :ref:`YANG++ Standard Library` contains conceptual API
+definitions that allow basic operations on classes.
+
+There is one API defined at this time to :ref:`compare classes`.
 
 New YANG Statements
 ---------------------
@@ -119,7 +337,20 @@ There are two new statements (plus sub-statements)
 There is a YANG Library addition to advertise the class bindings
 used (e.g. by the server) to produce the expanded schema tree.
 
--  classes (TBD)
+YANG Library Extensions
+---------------------------
+
+The :ref:`class name binding` information for a server
+needs to be defined that specifies the implemented classes
+on the server. This YANG module is TBD.
+
+.. code-block:: yang
+
+    augment /yanglib:yang-library {
+      container classes {
+        // contents TBD
+      }
+    }
 
 
 
@@ -385,7 +616,7 @@ Class Lifecycle
 The 'status' property (:rfc:`7950#section-7.21.2`) is used in YANG++,
 but there are changes and additions.
 
-The enumerations have the folowing meaning in YANG++:
+The enumerations have the following meaning in YANG++:
 
 -  **current**: class definition is current and MUST be implemented
    if supported

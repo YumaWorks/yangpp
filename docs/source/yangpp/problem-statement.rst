@@ -11,7 +11,8 @@ This provides a more structured and reusable design, that can be
 easily adapted for new uses.
 
 If YANG was more object-oriented it would be easier to build
-and maintain reusable software that used the data models.
+and maintain reusable software that used the data models derived
+from the YANG modules.
 
 There are several limitations of YANG 1.1 addressed in YANG++.
 
@@ -33,21 +34,61 @@ can be accessed with NETCONF or RESTCONF.
 
 Groupings and the uses expansion mechanisms have several limitations:
 
--  Groupings cannot be augmented
+-  **Groupings cannot be augmented**
 
    -  A new grouping can be created with a new name
       but all the related 'uses' statements would need to be
       changed to specify the new grouping name.
+
    -  Each location where a 'uses' statement expands the grouping
       can have 'augment' statements added to it.
 
--  Groupings are invariable and apply the same everywhere they are used
+   -  Development of standard groupings takes a long time
+      in an attempt to provide a complete and 'perfect' grouping
+      in the first release.
+
+-  **Groupings are invariable and apply the same everywhere they are used**
 
    -  There is no way to upgrade or refine a grouping.  Each
       expanded 'uses' statement must be augmented or refined.
 
--  Groupings cannot reference other groupings other than expanding
-   them inline with a 'uses' statement.
+   -  It can be much simpler to modify the grouping instead
+      of modifying the expansion in each 'uses' statement.
+
+   -  It should be possible to provide updates, upgrades,
+      vendor enhancements and deviations in 'replacement'
+      groupings that are expanded instead of the specified grouping.
+
+   -  It can be complex and error-prone to find and update
+      every expansion of a grouping.  This is tedious work
+      and can result in large YANG files if a grouping is
+      used frequently.
+
+
+-  **Groupings cannot reference other groupings**
+
+   -  Groupings can use other groupings but they can also reference
+      data nodes in the schema tree. The 'must', 'when', and 'path'
+      statements apply to the schema tree, after all 'uses'
+      statements have been expanded.
+
+   -  The external references assume a certain structure
+      which limits the contexts and schema tree locations
+      that a grouping can be used.
+
+   -  It is desirable to reference nodes in other groupings,
+      so the references are completely relocatable, as much
+      as possible.  The actual schema tree nodes should not need to
+      be specified.  It should be possible to defer this step
+      until the 'uses' statement is expanded.
+
+-  **Groupings cannot be deviated**
+
+   -  Groupings are not always completely reusable as defined.
+      It is desirable to apply deviations to a grouping,
+      instead of needing to apply the deviations every place
+      the grouping is expanded with the 'uses' statement.
+
 
 
 

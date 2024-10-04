@@ -19,6 +19,7 @@ The **class** statement is used like a grouping.
 It must be used somewhere in the schema tree to create accessible schema nodes,
 with the :ref:`uses-class-stmt`.
 
+Only
 **Usage**
 
 -  The :ref:`base-class-stmt` or :ref:`parent-class-stmt` can be present,
@@ -51,6 +52,10 @@ with the :ref:`uses-class-stmt`.
    * -  action
      -  :rfc:`7950#section-7.15`
      -  0..n
+
+   * -  autokey
+     -  :ref:`autokey-stmt`
+     -  0..1
 
    * -  base-class
      -  :ref:`base-class-stmt`
@@ -119,7 +124,7 @@ The following ABNF is added to the YANG syntax:
                  "{" stmtsep
                      ;; these stmts can appear in any order
                      [deprecated-stmt]
-                     [presence-stmt / key-stmt]
+                     [presence-stmt / key-stmt / autokey-stmt]
                      [base-class-stmt / parent-class-stmt]
                      *virtual-stmt
                      *classref-stmt
@@ -142,7 +147,7 @@ This statement MUST be present if the status of the class is ``deprecated``.
 It contains information to alert users to the possible removal of the class
 in the future.
 
--  The 'description' statment SHOULD be present and contain information
+-  The 'description' statement SHOULD be present and contain information
    about when the class is expected to change status to 'obsolete'.
 
 
@@ -226,7 +231,7 @@ The 'replaced-by-arg-str' string identifies the module and class name
 of a replacement class.
 
 -  The replacement SHOULD have a status of 'current'.
--  Multiple replaced-by statments can be listed.
+-  Multiple replaced-by statements can be listed.
 
 
 The following ABNF is added to the YANG syntax:
@@ -267,7 +272,7 @@ The 'any' statement is used to provide abstract nodes with are not named.
 -  This allows templates to be constructed.
 -  Does not represent a real schema node with a specific name like 'anydata'.
 -  Less specific than a virtual node and can include more than data nodes.
--  Shares the same samespace as objects and notifications
+-  Shares the same namespace as objects and notifications.
 
 **Supported abstract statements**
 
@@ -406,6 +411,47 @@ The following ABNF is added to the YANG syntax:
     }
 
 
+autokey-stmt
+~~~~~~~~~~~~~~
+
+The 'autokey' statement is used to create a class or a list
+with an automatically generated and maintained key leaf.
+
+.. code-block:: yang
+
+    list shopping-list {
+      autokey;
+      leaf item { type string; }
+      leaf quantity { type uint32; }
+    }
+
+There are many use-cases where the list key does not contain any
+semantics other than being a unique identifier.
+
+-  In this mode, the designer does not want to define or implement the list key management.
+-  The client does not want to provide a new unique list key by first locking the config
+   and retrieving all existing entries to find an unused entry
+-  **The current protocol operations do not fully support this feature and need improvements**
+-  The key is a uint32 number from 1 .. max
+-  The key is a plain leaf as required for a key leaf
+-  The value 0 is reserved for indicate no key
+-  TBD: Maybe not allowed for ordered-by user, or no insert operation allowed for create
+-  TBD: list syntax is expected to change to support autokey, not just the class key.
+
+.. code-block:: yang
+
+    leaf _id_ {
+      type uint32;
+    }
+
+Issues:
+
+-  The autokey is un-named so it does not conflict with any siblings, or could
+   use reserved name like "_id_".
+-  The key name needs to be known by the client and be visible in retrievals
+
+This is not the same as position-based (no key-stmt at all) because autokey does not renumber for any reason
+The server assigns an unused value for the ID and the protocol operation enhancements allow this operation and convey the assigned ID to the client
 
 
 base-class-stmt
@@ -447,7 +493,6 @@ is expected to contain top-level objects as child data nodes .
 The class must be declared:
 
 .. code-block:: yang
-   :emphasize-lines: 2
 
     class config {
         base-class root;
@@ -459,7 +504,6 @@ The class must be declared:
 The :ref:`uses-class-stmt` can be used anywhere a 'uses-stmt' can be used,
 
 .. code-block:: yang
-   :emphasize-lines: 3
 
     rpc edit-data {
       input {
@@ -485,7 +529,7 @@ message base-class
 +++++++++++++++++++++++++++
 
 This class represents a protocol message.
-It it similar to the 'structure' base-class but the indended use
+It it similar to the 'structure' base-class but the intended use
 is for some sort of protocol message.
 
 -  An instance of this class has the same properties as an sx:structure.
@@ -516,6 +560,67 @@ It identifies the class to use and also maps any virtual objects.
 There SHOULD be a 'map-virtual' substatement for each
 virtual object inherited from the parent class
 
+If the parent class is imported from a different module,
+then the 'min-revision' statement SHOULD be used
+if this class relies on definitions not present in the first
+revision of the imported module.
+
+The contents of the parent class are inherited, as if it
+was a grouping.  The 'refine' statement is used to
+modify any schema nodes allowed by the 'refine' statement.
+
+
+**Example: Change the mandatory-stmt**
+
+Sample parent class:
+
+.. code-block:: yang
+
+    class udp-client {
+      uses udp-client-grouping;
+    }
+
+
+Sample Derived class using 'refine' to change remote-port:
+
+.. code-block:: yang
+
+    class udp-notif-client {
+      parent-class udp-client {
+        refine remote-port {
+          mandatory true;
+        }
+      }
+    }
+
+
+If any inherited definitions in the class being defined
+deviate from the parent class definitions then
+the 'deviation' statement is used to specify the differences.
+Often groupings are 'almost' reusable and the 'refine' statement
+cannot make the same changes as a deviation.
+
+In YANG++ deviations are allowed inline in the class definition
+and not always considered as defects or lack of conformance. They are
+used to adapt the parent class for new requirements.
+
+**Example: Remove unused leafs from the parent class**
+
+Sample Derived class using 'deviation' to remove
+the 'local-address' and 'local-port' leafs:
+
+.. code-block:: yang
+
+    class example-client {
+      parent-class udp-client {
+        deviation local-address {
+          deviate not-supported;
+        }
+        deviation local-port {
+          deviate not-supported;
+        }
+      }
+    }
 
 
 **parent-class-stmt Substatements**
@@ -532,14 +637,26 @@ virtual object inherited from the parent class
      -  :rfc:`7950#section-7.21.3`
      -  0..1
 
+   * -  deviation
+     -  :rfc:`7950#section-7.20.3`
+     -  0..n
+
    * -  map-virtual
      -  :ref:`map-virtual-stmt`
      -  0..n
+
+   * -  min-revision
+     -  TBD
+     -  0..1
+
 
    * -  reference-stmt
      -  :rfc:`7950#section-7.21.4`
      -  0..1
 
+   * -  refine
+     -  :rfc:`7950#section-7.13.2`
+     -  0..n
 
 
 The following ABNF is added to the YANG syntax:
@@ -551,8 +668,11 @@ The following ABNF is added to the YANG syntax:
                           "{" stmtsep
                               ;; these stmts can appear in any order
                               *map-virtual-stmt
+                              [min-revision-stmt]
                               [description-stmt]
                               [reference-stmt]
+                              *deviation-stmt
+                              *refine-stmt
                           "}") stmtsep
 
 
@@ -729,7 +849,6 @@ to assign a real name.
 Example:
 
 .. code-block:: yang
-   :emphasize-lines: 2
 
      virtual {
         action <reset>;
@@ -869,7 +988,6 @@ expands a grouping in place of the 'uses' node in the schema tree.
 A class is conceptually expanded in the schema tree instead of a grouping.
 
 .. code-block:: yang
-   :emphasize-lines: 2
 
     container system {
       uses-class address;
@@ -1015,9 +1133,10 @@ the real schema tree.
 
       -  The :ref:`uses-class-stmt` can only safely provide refpoint
          bindings for the specified class, not the implemented class
-      -  TBD: Additional or changed 'bind-refpoint' definitions
+      -  TBD: Additional or changed 'bind-classref' definitions
          in a different implemented class need to be handled somehow.
-
+      -  TBD: Need to automatically-as-possible handle bindings
+         for nested classref
 
 
 **bind-classref-stmt Substatements**
