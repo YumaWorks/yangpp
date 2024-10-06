@@ -6,39 +6,39 @@ YANG++ Introduction
 ====================
 
 The YANG++ language adds some object-oriented design capability to
-the YANG language.
-
-However it is much more structured and powerful than a grouping.
+the YANG language. A simple conceptual class hierarchy is defined,
+based on four basic :ref:`class types`.
 
 
 YANG++ Terminology
 -------------------------
 
-.. list-table::
-   :header-rows: 1
-   :widths: 30 70
+-  **class**: a reusable set of YANG statements
 
-   * -  term
-     -  description
+-  **base class**: a built-in base type, not defined with a class definition
 
-   * -  class
-     -  a reusable set of YANG statements
-   * -  base class
-     -  a class that has no parent class
-   * -  parent class
-     -  a class that is inherited by a derived class
-   * -  derived class
-     -  a class that has a parent-class
-   * -  specified class
-     -  the class used in the data model
-   * -  implemented class
-     -  the class used in the implementation
-   * -  class instance
-     -  a data tree conforming to the conceptual schema node
-        defined by the class
-   * -  class root
-     -  the topmost data node corresponding to the XPath
-        document root for the class instance
+-  **class instance**: a data tree conforming to the conceptual schema node
+   defined by the class
+
+-  **class root**: the topmost data node and XPath document root for the class instance
+
+-  **concrete object**: an object that is not defined within a :ref:`virtual-stmt`
+
+-  **derived class**: a class that has a parent-class
+
+-  **implemented class**: the class used in the implementation
+
+-  **parent class**: the class that is inherited by a derived class
+
+-  **root class**: a class that has a base class and no parent class
+
+-  **specified class**: the class used in the YANG data model
+
+-  **virtual class**: a class that contains any :ref:`virtual objects`
+
+-  **virtual object**: a named object that is defined within a :ref:`virtual-stmt`
+
+-  **virtual object template**: an un-named object that is defined within a :ref:`virtual-stmt`
 
 
 YANG++ Design Goals
@@ -108,11 +108,12 @@ to doing this at the abstract class level.
       }
     }
 
-One problem is that every location the 'std-grouping' is used,
-the module is changed to use 'my-grouping' instead.
+
+**One problem is that every location the 'std-grouping' is used,
+the module is changed to use 'my-grouping' instead.**
+
 
 .. code-block:: yang
-   :emphasize-lines: 3, 8
 
      // OLD:
      container std-parms {
@@ -127,11 +128,17 @@ the module is changed to use 'my-grouping' instead.
 
 This is often unacceptable and/or impractical.
 
+The other YANG 1.1 solution requires augment and/or deviation statements
+for each usage of the grouping.
+This "after expansion" approach is difficult to maintain to achieve
+consistent and current YANG module additions.
+
 YANG++ classes allows this sort of extensibility
-without changing any of the 'uses' statements.
+without changing any of the 'uses' statements or requiring augment
+and deviation statements for every 'uses' statement.
+
 
 .. code-block:: yang
-   :emphasize-lines: 13 - 16
 
     class std-grouping {
       // ...
@@ -164,10 +171,10 @@ but no further schema information (i.e. derived class)
 will be available, so a virtual node cannot be used.
 
 For example, the 'notification' message header defined in
-:rfc:`5277` can be defined with a simple YANG++ class:
+:rfc:`5277` can be defined with a simple YANG++ message base class
+containing an 'any notification' statement.
 
 .. code-block:: yang
-   :emphasize-lines: 11
 
     class notification {
       base-class message;
@@ -195,116 +202,10 @@ virtual actions, notifications, and data definitions, that are expected
 to be replaced and possibly "filled in" with real definitions
 by a derived class.
 
-This is sometimes similar to a YANG 1.1 empty choice, which other modules
-are expected to augment with 'case' statements.
+**Virtual Object Templates**
 
--  A derived class can add to the virtual node when a concrete node
-   is defined.  This is similar to 'augments' but much simpler to use.
-
--  Un-named virtual nodes are supported, which allow the concrete
-   node to have a different name than the virtual node.
-
--  If a :ref:`uses-class-stmt` specifies a class with any virtual
-   objects in it, then a :ref:`class name binding` for a concrete
-   class MUST exist in the YANG library configuration.
-
--  A concrete object cannot be changed to a virtual object in a derived class.
-
--  A virtual object cannot be mapped to another virtual object.
-
--  If any virtual objects are not defined in the derived class
-   then the derived class is also a virtual class.  The virtual
-   nodes are passed through to the next derived class.
-
--  Properties can be added by a derived concrete object.
-
--  Any changes to the inherited virtual or concrete objects
-   need to be allowed with 'refine' and/or 'deviation' statements
-   within the :ref:`parent-class-stmt`.
-
--  Variations from the inherited virtual object without any
-   such statements are treated as errors.
-
--  TBD: Use warnings instead of strict rules for NBC changes
-
--  TBD: complex nested templates with deep virtual objects
-
-Example: Abstract class represents a Contact entry in a phone book.
-
-.. code-block:: yang
-
-   class ContactTemplate {
-     virtual {
-       container <identity> {
-         description
-           "Container with the fields representing the
-            identity of the contact. The container can have
-            any name valid for the context, that does not conflict
-            with any sibling node names.";
-       }
-       container contact-info {
-         description
-           "Container with the fields representing the
-            contact information for the person with
-            the associated <identity> information.
-            The container must be named 'contact-info'.";
-       }
-     }
-   }
-
-
-A derived class is needed which resolves the virtual objects.
-
--  A :ref:`map-virtual-stmt` is needed for the ``<identity>``
-   mapping to a concrete object name.
-
--  This mapping is not needed for the ``contact-info`` container
-   since a name change is not allowed.
-
-
-.. code-block:: yang
-
-    class Contact {
-      parent-class ContactTemplate {
-        map-virtual <identity> {
-          map-path name;
-        }
-      }
-
-      container name {
-        leaf first-name { type string;
-        leaf last-name { type string; }
-      }
-
-      container contact-info {
-        leaf email-address {
-          type string;
-        }
-      }
-    }
-
-In this example, a :ref:`class name binding` must be
-configured to map the 'Contact' class to the 'ContactTemplate' class.
-
-.. code-block:: yang
-
-    container sysadmin-contact {
-      uses-class ContactTemplate;
-    }
-
-
-
-A new abstract class can be created which uses this class:
-
-.. code-block:: yang
-
-    class ContactList {
-      list contacts {
-        autokey;
-        uses-class ContactTemplate;
-      }
-    }
-
+:ref:`Virtual objects` can be un-named, allowing the concrete object definition
+to pick the name of the object.
 
 
 **Containment and Model Structure**
@@ -318,13 +219,24 @@ for the expanded schema tree are located.  They are scattered
 across any number of modules.  The YANG++ class hierarchy
 allows these definitions to be defined in one place.
 
+Inline deviations are allowed in YANG++, for use-cases where
+an existing class definition is almost suitable for a new application,
+but needs deviations (e.g., remove an irrelevant leaf).
 
-**Standard API Library**
+
+**Standard Library**
 
 The :ref:`YANG++ Standard Library` contains conceptual API
 definitions that allow basic operations on classes.
 
 There is one API defined at this time to :ref:`compare classes`.
+
+**Automatic Translation to YANG 1.1**
+
+It should be possible to define a standard :ref:`YANG 1.1 Translation`
+if all virtual objects are resolved and known to the compiler.
+Translation allows existing tools to be used with new YANG++ models.
+
 
 New YANG Statements
 ---------------------
@@ -337,21 +249,13 @@ There are two new statements (plus sub-statements)
 There is a YANG Library addition to advertise the class bindings
 used (e.g. by the server) to produce the expanded schema tree.
 
-YANG Library Extensions
+New YANG Library Objects
 ---------------------------
 
 The :ref:`class name binding` information for a server
 needs to be defined that specifies the implemented classes
-on the server. This YANG module is TBD.
-
-.. code-block:: yang
-
-    augment /yanglib:yang-library {
-      container classes {
-        // contents TBD
-      }
-    }
-
+on the server. This YANG module is defined
+in the :ref:`YANG Library Additions` section.
 
 
 Class Types
@@ -522,20 +426,132 @@ name is a virtual name that is expected to be replaced
 in a derived class.  The first class that binds a real name
 to the object becomes the name of the object in the class API.
 
+This is sometimes similar to a YANG 1.1 empty choice, which other modules
+are expected to augment with 'case' statements.
+
+-  A derived class can add to the virtual node when a concrete node
+   is defined.  This is similar to 'augments' but much simpler to use.
+
+-  Un-named virtual nodes are supported, which allow the concrete
+   node to have a different name than the virtual node.
+
+-  If a :ref:`uses-class-stmt` specifies a class with any virtual
+   objects in it, then a :ref:`class name binding` for a concrete
+   class MUST exist in the YANG library configuration.
+
+-  A concrete object cannot be changed to a virtual object in a derived class.
+
+-  A virtual object cannot be mapped to another virtual object.
+
+-  If any virtual objects are not defined in the derived class
+   then the derived class is also a virtual class.  The virtual
+   nodes are passed through to the next derived class.
+
+-  Properties can be added by a derived concrete object.
+
+-  Any changes to the inherited virtual or concrete objects
+   need to be allowed with 'refine' and/or 'deviation' statements
+   within the :ref:`parent-class-stmt`.
+
+-  Variations from the inherited virtual object without any
+   such statements are treated as errors.
+
+-  TBD: Use warnings instead of strict rules for NBC changes
+
+-  TBD: complex nested templates with deep virtual objects
+
+Example: Abstract class represents a Contact entry in a phone book.
+
+.. code-block:: yang
+
+   class ContactTemplate {
+     virtual {
+       container <identity> {
+         description
+           "Container with the fields representing the
+            identity of the contact. The container can have
+            any name valid for the context, that does not conflict
+            with any sibling node names.";
+       }
+       container contact-info {
+         description
+           "Container with the fields representing the
+            contact information for the person with
+            the associated <identity> information.
+            The container must be named 'contact-info'.";
+       }
+     }
+   }
+
+
+A derived class is needed which resolves the virtual objects.
+
+-  A :ref:`map-virtual-stmt` is needed for the ``<identity>``
+   mapping to a concrete object name.
+
+-  This mapping is not needed for the ``contact-info`` container
+   since a name change is not allowed.
+
+
+.. code-block:: yang
+
+    class Contact {
+      parent-class ContactTemplate {
+        map-virtual <identity> {
+          map-path name;
+        }
+      }
+
+      container name {
+        leaf first-name { type string;
+        leaf last-name { type string; }
+      }
+
+      container contact-info {
+        leaf email-address {
+          type string;
+        }
+      }
+    }
+
+In this example, a :ref:`class name binding` must be
+configured to map the 'Contact' class to the 'ContactTemplate' class.
+
+.. code-block:: yang
+
+    container sysadmin-contact {
+      uses-class ContactTemplate;
+    }
+
+
+
+A new abstract class can be created which uses this class:
+
+.. code-block:: yang
+
+    class ContactList {
+      list contacts {
+        autokey;
+        uses-class ContactTemplate;
+      }
+    }
+
 
 Class Root
 -------------
 
 A YANG++ class is more structured than a grouping.
 It has a combination of properties from existing YANG constructs.
-A class is like a 'grouping' since it is abstract and requires
-a corresponding 'uses' type of statement to create real schema nodes.
-A class is also like a schema mount point because it can be used
-in a position independent way without rewriting XPath and path statements.
-The class root is a real schema node just like a schema mount point.
 
-The class root is an actual schema node in the object tree.
-The schema node type depends on the class root type.
+-  A class is like a 'grouping' since it is abstract and requires
+   a corresponding 'uses' type of statement to create real schema nodes.
+-  A class is also like a schema mount point because it can be used
+   in a position independent way without rewriting XPath and path statements.
+
+The class root is a real schema node just like a schema mount point.
+The schema node type (container or list) depends on the class root type.
+The class root is also the document root for any :ref:`class path string`
+referencing the class.
 
 
 Class Root Type

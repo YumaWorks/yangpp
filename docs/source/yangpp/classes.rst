@@ -1053,6 +1053,10 @@ within the class.
      -  :rfc:`7950#section-7.21.3`
      -  0..1
 
+   * -  deviation
+     -  :rfc:`7950#section-7.20.3`
+     -  0..n
+
    * -  if-feature
      -  :rfc:`7950#section-7.20.2d`
      -  0..n
@@ -1089,6 +1093,7 @@ within the class.
                     [description-stmt]
                     [reference-stmt]
                     *refine-stmt
+                    *deviation-stmt
                     *uses-augment-stmt
                  "}") stmtsep
 
@@ -1146,8 +1151,7 @@ the real schema tree.
    :header-rows: 1
    :widths: 25 50 25
 
-   * -  substatement     -  a class that has a parent-class
-
+   * -  substatement
      -  section
      -  cardinality
 

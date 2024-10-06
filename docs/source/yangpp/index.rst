@@ -9,3 +9,5 @@ YANG++ Language
    introduction
    classes
    standard-library
+   yanglib-additions
+   yang11-translation
