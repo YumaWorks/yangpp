@@ -1251,25 +1251,39 @@ a 'bind-class' statement must be provided:
 
 
 
+
+
+
 YANG++ Class Examples
 -----------------------
 
+Template Example
+~~~~~~~~~~~~~~~~~~
+
+In this example, a bare-bones service template is defined
+that has 3 virtual members:
+
+-  reset action
+-  status action
+-  config container
+
 **Example Base Class:**
 
-.. code-block:: text
+.. code-block:: yang
 
-    module base-mod {
+    module base-service {
       // ..
 
-      class base1 {
+      class base-service {
        virtual {
-         // concrete class expected to map these statements
+         // concrete class expected to map these 2 statements
+         // and provide names for these actions
          action <reset>;
+         action <status>;
 
-         list list1 {
-           key name1;
-           leaf name1 { type string; }
-         }
+         // concrete class expected to fill in this config container
+         // as needed and use the provided name 'config'
+         container config;
        }
      }
 
@@ -1277,224 +1291,108 @@ YANG++ Class Examples
 
 
 
-**Example Derived Class:**
+**Example Module Defining a Derived Class:**
 
-.. code-block:: text
+.. code-block:: yang
 
-    module mybase-mod {
-      import base-mod { prefix base; }
+    module my-service {
+      import base-service { prefix base; }
 
-      // a class
-      class mybase1 {
-       parent-class base:base1 {
+      class mybase-service {
+       parent-class base:base-service {
          map-virtual <reset> {
-           map-path example-reset;
+           map-path my-reset;
+         }
+         map-virtual <status> {
+           map-path my-status;
          }
        }
 
-       // no virtual sections in this class makes it a concrete class
+       // local groupings work the same since the class root
+       // is a real container or list node
+       grouping status-parms {
+          leaf status {
+            type string;
+          }
+          leaf last-error {
+            type string;
+          }
+       }
 
+       // no virtual sections in this class makes it a concrete class
        // a concrete definition for each 'virtual' definition is expected.
        // if missing then a deviate (not-supported) is implied
-       action example-reset {
+       action my-reset {
          input {
            leaf myparm1 { type string; }
          }
        }
 
-       // this is a replacement of the virtual list list1
-       list list1 {
-         key name1;
-         leaf name1 { type string; }
-         leaf my-leaf2 { type string; }
-       }
-
-     }
-
-
-**Example Concrete Module:**
-
-.. code-block:: text
-
-       module base1-real {
-         // ...
-         import base-mod { prefix myb; }
-
-         // top-level /base1
-         uses-class myb:base1;
-       }
-
-Server YANG Library Mapping
-
--  For each module that contains implemented classes,
-   a class entry is required in the yang-library update
-
--  Maps real-class to lib-class
-
-.. code-block:: text
-
-      classes {
-        class [lib-class] {
-          lib-class /base-mod:base1
-          real-class /mybase-mod:mybase1
-        }
-      }
-      modules {
-       module base1-real;
-     }
-     imported-modules {
-       module base-mod;
-       module mybase-mod;
-     }
-
-
-
-Virtual objects created:
-
-- action /base1[name]/reset       mapped to mybase1::my-reset
-- action /base1[name]/restart     mapped to mybase1::my-restart
-- list   /base1[name]/list1       mapped to mybase1::my-list1
-- list   /base1[name]/list2       mapped to base1::list2
-
-Real objects created:
-
-- action /base1[name]/my-reset
-- action /base1[name]/my-restart
-- list   /base1[name]/my-list1
-- list   /base1[name]/list2
-
-
-
-YANG++ Name Mapping Examples
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-Class Hierarchy:
-
-.. code-block:: text
-
-    event -> system-event -> my-system-event
-
-    event -> system-event -> my-system-event -> my-system-event2
-
-Object Name Derivation:
-
-.. code-block:: text
-
-    <event> -> <system-event> -> example-system-event
-
-
-Example Base Class:
-
-.. code-block:: text
-
-    class event {
-       base-class object;
-       virtual {
-         notification <event>;
-       }
-    }
-
-
-
-Example Parent Class:
-
--  This class replaces the 'event' virtual node with a
-   different virtual node 'system-event'.
-
-
-.. code-block:: text
-
-
-    class system-event {
-       parent-class event {
-         map-virtual event {
-           map-path <system-event>;
+       action my-status {
+         output {
+           uses status-parms;
          }
        }
 
-       // this is a replacement of the virtual 'event'
-       virtual {
-          notification <system-event> {
-             leaf event-type { type string; }
-          }
-       }
-    }
-
-
-Example Derived Class:
-
-
--  This class replaces the 'system-event' virtual node with a
-   concrete node 'example-system-event'.
-
-
-.. code-block:: text
-
-    class my-system-event {
-       parent-class system-event {
-         map-virtual <system-event> {
-           map-path example-system-event;
+       // this is a replacement of the virtual config
+       container config {
+         list list1 {
+           key name1;
+           leaf name1 { type string; }
+           leaf my-leaf2 { type string; }
          }
        }
-
-       // this is a replacement of the virtual 'system-event'
-       notification example-system-event {
-         // leaf event-type is inherited from system-event class
-         leaf my-data { type string; }
-       }
-    }
+     }
 
 
-To create a class instance:
+**Example Concrete Module Using The Base Class:**
 
-.. code-block:: text
-
-    uses-class system-event;
-
-
-If there is a uses-class in the root directory
-then the data nodes visible to the client if
-the 'my-system-event' class is used in the server:
-
-
-.. code-block:: text
-
-    container my-system-event {
-       notification my-event {
-         leaf event-type { type string; }
-         leaf my-data { type string; }
-       }
-    }
-
-
-
-Example Extra Derived Class:
-
--  A new version of the event type is created that adds a leaf
-
-.. code-block:: text
-
-    class my-system-event2 {
-       parent-class my-system-event;
-       augment /my-event {
-         // leaf event-type is inherited from system-event class
-         leaf my-extra-data { type string; }
-       }
-    }
-
-
-
-If there is a uses-class in the root directory
-then the data nodes visible to the client if
-the 'my-system-event2' class is used in the server:
+A top-level container name ``/mybase-service`` is created.
 
 .. code-block:: yang
 
-    container my-system-event {
-       notification my-event {
-         leaf event-type { type string; }
-         leaf my-data { type string; }
-         leaf my-extra-data { type string; }
+       module example-services {
+         // ...
+         import base-mod { prefix base; }
+
+         // top-level /mybase-service
+         uses-class base:base-service {
+           root-name mybase-service;
+         }
        }
-    }
+
+**Example Objects For Derived Class:**
+
+In this example, the server maps implemented class 'mybase-service' to
+the specified (virtual) class 'base-service'.
+
+Real objects created in module 'example-services':
+
+.. code-block:: text
+
+    module: example-services
+      +--rw mybase-service
+         +---x my-reset
+         |  +---w input
+         |     +---w myparm1?   string
+         +---x my-status
+         |  +--ro output
+         |     +--ro status?       string
+         |     +--ro last-error?   string
+         +--rw config
+            +--rw list1* [name1]
+               +--rw name1       string
+               +--rw my-leaf2?   string
+
+
+**Example Translation to YANG 1.1 Module**
+
+A YANG 1.1 for the 'services' module is shown for
+the mapping to the implemented class 'mybase-service'.
+
+A generic module is not possible in this case since the
+specified class is also a virtual class.
+
+
+.. literalinclude:: example-services.yang
+   :language: yang

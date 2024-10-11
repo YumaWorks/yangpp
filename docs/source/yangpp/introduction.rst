@@ -110,7 +110,8 @@ to doing this at the abstract class level.
 
 
 **One problem is that every location the 'std-grouping' is used,
-the module is changed to use 'my-grouping' instead.**
+the module must be changed to use 'my-grouping' instead.
+This is often unacceptable and/or impractical.**
 
 
 .. code-block:: yang
@@ -126,12 +127,13 @@ the module is changed to use 'my-grouping' instead.**
      }
 
 
-This is often unacceptable and/or impractical.
+
 
 The other YANG 1.1 solution requires augment and/or deviation statements
 for each usage of the grouping.
 This "after expansion" approach is difficult to maintain to achieve
 consistent and current YANG module additions.
+
 
 YANG++ classes allows this sort of extensibility
 without changing any of the 'uses' statements or requiring augment
@@ -308,14 +310,18 @@ the validation is the same as for an identityref leaf.
 
 -  Instead of exact match, it is a derived-from-or-self() match
 
+-  Instead of augmenting and deviating objects for every 'uses'
+   of a grouping, the :ref:`parent-class-stmt` is used to
+   conceptually and automatically extend the grouping.
+
 The server is allowed to apply any valid class to a particular
 uses-class expansion.
 
 -  The server is not required to use the same class in every
    expansion like a grouping.
 
-The YANG library contains mappings between library class names
-and the real classes used.
+The :ref:`YANG library additions` define mappings between the specified class names
+and the implemented classes used.
 
 
 

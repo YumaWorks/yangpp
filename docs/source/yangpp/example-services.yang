@@ -1,0 +1,32 @@
+module example-services {
+    yang-version 1.1;
+    prefix srv;
+    namespace "urn:example.com:params:xml:ns:yang:example-services";
+
+    container mybase-service {
+       action my-reset {
+         input {
+           leaf myparm1 { type string; }
+         }
+       }
+
+       action my-status {
+         output {
+          leaf status {
+            type string;
+          }
+          leaf last-error {
+            type string;
+          }
+         }
+       }
+
+       container config {
+         list list1 {
+           key name1;
+           leaf name1 { type string; }
+           leaf my-leaf2 { type string; }
+         }
+       }
+    }
+}
