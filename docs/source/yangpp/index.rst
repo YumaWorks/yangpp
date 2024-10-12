@@ -3,7 +3,7 @@ YANG++ Language
 ===================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    problem-statement
    introduction

@@ -81,13 +81,33 @@ Only
      -  :rfc:`7950#section-7.12`
      -  0..n
 
+   * -  if-feature
+     -  :rfc:`7950#section-7.20.2`
+     -  0..n
+
    * -  key
      -  :rfc:`7950#section-7.8.2`
+     -  0..1
+
+   * -  max-elements
+     -  :rfc:`7950#section-7.7.6`
+     -  0..1 (if list type)
+
+   * -  min-elements
+     -  :rfc:`7950#section-7.7.5`
+     -  0..1 (if list type)
+
+   * -  must..n
+     -  :rfc:`7950#section-7.5.3`
      -  0..1
 
    * -  notification
      -  :rfc:`7950#section-7.16`
      -  0..n
+
+   * -  ordered-by
+     -  :rfc:`7950#section-7.7.7`
+     -  0..1 (if list type)
 
    * -  parent-class
      -  :ref:`parent-class-stmt`
@@ -101,6 +121,10 @@ Only
      -  :rfc:`7950#section-7.21.4`
      -  0..1
 
+   * -  status
+     -  :rfc:`7950#section-7.21.2`
+     -  0..1
+
    * -  typedef
      -  :rfc:`7950#section-7.3`
      -  0..n
@@ -109,8 +133,8 @@ Only
      -  :ref:`virtual-stmt`
      -  0..n
 
-   * -  status
-     -  :rfc:`7950#section-7.21.2`
+   * -  when
+     -  :rfc:`7950#section-7.21.5`
      -  0..1
 
 
@@ -132,6 +156,11 @@ The following ABNF is added to the YANG syntax:
                      *(data-def-stmt / any-stmt)
                      *action-stmt
                      *notification-stmt
+                     [max-elements-stmt]
+                     [min-elements-stmt]
+                     [must-stmt]
+                     [when-stmt]
+                     [ordered-by-stmt]
                      [status-stmt]
                      [description-stmt]
                      [reference-stmt]
@@ -205,7 +234,6 @@ The following ABNF is added to the YANG syntax:
 The following example show a class that is now deprecated.
 
 .. code-block:: yang
-   :emphasize-lines: 3 - 7
 
     class my-message {
       base-class message;
@@ -247,7 +275,6 @@ The following ABNF is added to the YANG syntax:
 Example:
 
 .. code-block:: yang
-   :emphasize-lines: 4
 
     class my-message {
       base-class message;

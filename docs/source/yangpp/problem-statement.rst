@@ -4,17 +4,28 @@
 YANG++ Problem Statement
 ==============================
 
-**The YANG reuse mechanisms need improvement.**
+The YANG reuse mechanisms need improvement.
 
 Modern software is object-oriented with a layered abstraction model.
 This provides a more structured and reusable design, that can be
 easily adapted for new uses.
 
+YANG data models are difficult to use because
+the components of a composite conceptual model are spread
+over many modules.  There can be many standard modules,
+vendor models, and vendor deviations, all required to
+understand the intended data model.
+
+The YANG reuse mechanisms do not provide any real abstraction layer.
+A grouping is just a syntactic mechanism to cut-and-paste
+data node definitions.  All path references (must, when, leafref)
+must specify the final schema tree.  It is not easy to construct
+path expressions that are position-independent.
+
 If YANG was more object-oriented it would be easier to build
 and maintain reusable software that used the data models derived
 from the YANG modules.
 
-There are several limitations of YANG 1.1 addressed in YANG++.
 
 
 Problems With Groupings
@@ -88,6 +99,77 @@ Groupings and the uses expansion mechanisms have several limitations:
       It is desirable to apply deviations to a grouping,
       instead of needing to apply the deviations every place
       the grouping is expanded with the 'uses' statement.
+
+
+Problems Building Data Models
+------------------------------
+
+Although the term 'data model' is not precise, it generally refers
+to the conceptual schema tree derived from the final expansion
+of the objects, according to the associated YANG library.
+
+It is desirable to extend and alter any grouping without
+needing to monitor every usage of that grouping.
+
+YANG 1.1 has 2 ways to extend and change data models.
+In both cases the designer must be aware of every
+usage of the grouping in order to extend or change it.
+
+The first is to create a new grouping that uses the old grouping
+and replace the 'uses' statement everywhere the new grouping is needed.
+It is often unacceptable because the source module cannot be changed,
+especially for standard modules.
+
+
+.. code-block:: yang
+
+    // module std
+    grouping std-parms {
+      leaf std-leaf ( type string; }
+    }
+
+    // module example-parms
+    grouping my-parms {
+      uses std:std-parms;
+      leaf my-extra-leaf { type string; }
+    }
+
+    // OLD module top-parms
+    container top {
+      uses std:std-parms;
+    }
+
+    // NEW module top-parms
+    container top {
+      uses ex:my-parms;
+    }
+
+
+The only approach that is widely used is to  augment and deviate each
+expanded data node everywhere the 'uses' statement for
+the grouping appears. This "after expansion" approach is difficult
+to maintain to achieve consistent and current YANG module additions.
+It may be possible if there are only one or two uses of the grouping,
+and the designers are aware of every usage of the grouping.
+
+
+.. code-block:: yang
+
+    // module std
+    grouping std-parms {
+      leaf std-leaf ( type string; }
+    }
+
+    // module top-parms
+    container top {
+      uses std-parms;
+    }
+
+    // module example-parms
+    augment /top {
+      leaf my-extra-leaf { type string; }
+    }
+
 
 
 

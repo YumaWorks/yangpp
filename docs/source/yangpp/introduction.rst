@@ -92,49 +92,6 @@ to be customized. YANG 1.1 requires every usage of a grouping
 to be augmented, refined, and deviated.  YANG++ has the option
 to doing this at the abstract class level.
 
--  YANG 1.1 requires that a designer create a new grouping
-   that includes and changes the base grouping
-
-.. code-block:: yang
-
-    grouping std-grouping {
-      // ...
-    }
-
-    grouping my-grouping {
-      uses std-grouping;
-      leaf my-extra-leaf {
-        // ...
-      }
-    }
-
-
-**One problem is that every location the 'std-grouping' is used,
-the module must be changed to use 'my-grouping' instead.
-This is often unacceptable and/or impractical.**
-
-
-.. code-block:: yang
-
-     // OLD:
-     container std-parms {
-       uses std-grouping;
-     }
-
-     // NEW:
-     container std-parms {
-       uses my-grouping;
-     }
-
-
-
-
-The other YANG 1.1 solution requires augment and/or deviation statements
-for each usage of the grouping.
-This "after expansion" approach is difficult to maintain to achieve
-consistent and current YANG module additions.
-
-
 YANG++ classes allows this sort of extensibility
 without changing any of the 'uses' statements or requiring augment
 and deviation statements for every 'uses' statement.
@@ -142,23 +99,21 @@ and deviation statements for every 'uses' statement.
 
 .. code-block:: yang
 
-    class std-grouping {
-      // ...
+    class std-parms {
+      leaf std-leaf ( type string; }
     }
 
-    class my-grouping {
-      parent-class std-grouping;
-      leaf my-extra-leaf {
-        // ...
-      }
+    class my-parms {
+      parent-class std-parms;
+      leaf my-extra-leaf { type string; }
     }
 
-     container std-parms {
-       // since match is derived-from-or-self both
-       // std-grouping and my-grouping are allowed
-       // YANG library indicates any class mappings
-       uses-class std-grouping;
-     }
+    // since match is derived-from-or-self both
+    // std-grouping and my-grouping are allowed
+    // YANG library indicates any class mappings
+    uses-class std-parms {
+      root-name top;
+    }
 
 
 **Abstract Schema Nodes: Message Templating**
@@ -601,7 +556,7 @@ used to create different types of class instances.
        }
 
 -  If an empty 'key' statement is present in the class then the class root
-   is a list with the integer index as the key.
+   is a list with the integer 'position' index as the key.
 
    .. code-block:: yang
 
