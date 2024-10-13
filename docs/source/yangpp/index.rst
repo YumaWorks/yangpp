@@ -11,3 +11,4 @@ YANG++ Language
    standard-library
    yanglib-additions
    yang11-translation
+   examples

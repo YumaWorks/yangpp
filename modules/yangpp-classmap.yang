@@ -1,0 +1,78 @@
+ module yangpp-classmap {
+     yang-version 1.1;
+     namespace "urn:yangpp:params:xml:ns:yang:yangpp-classmap";
+     prefix classmap;
+
+     import ietf-yang-library { prefix yanglib; }
+     import ietf-yang-types { prefix yang; }
+
+     revision "2024-11-12" {
+       description "example YANG library additions for YANG++";
+     }
+
+     grouping classmap-parms {
+       description
+         "A class mapping consists of 2 class IDs.
+          The implemented class ID is mapped to the specified class ID.
+          Both 'specified-module' and 'implemented-module' are
+          expected to be listed as'implemented' in the YANG library.";
+
+         leaf specified-module {
+           type yang:yang-identifier;
+           mandatory true;
+           description
+             "The name of the module containing the specified class.";
+         }
+
+         leaf specified-class {
+           type yang:yang-identifier;
+           mandatory true;
+           description
+             "The identifier for the specified class, defined within the
+              module named by 'specified-module'";
+         }
+
+         leaf implemented-module {
+           type yang:yang-identifier;
+           mandatory true;
+           description
+             "The name of the module containing the implemented class.";
+         }
+
+         leaf implemented-class {
+           type yang:yang-identifier;
+           mandatory true;
+           description
+             "The identifier for the implemented class, defined within the
+              module named by 'implemented-module'";
+         }
+     }
+
+     grouping yangpp-parms {
+       description
+         "Set of YANG++ class mappings that can be used
+          at the global or per-node level.
+
+          If no classmap entry is found for a specified class
+          then the implemented class is assumed to be the
+          specified class.
+
+          A classmap entry is required if the specified class
+          is a virtual class.";
+
+       list classmap {
+         description
+           "List of class mappings.";
+         key "specified-module specified-class";
+         uses classmap-parms;
+       }
+     }
+
+     augment /yanglib:yang-library {
+       container yangpp {
+         uses yangpp-parms;
+       }
+     }
+
+    // TBD: per-node mappings based on RFC 9196
+}

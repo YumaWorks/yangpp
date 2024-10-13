@@ -22,10 +22,14 @@ data node definitions.  All path references (must, when, leafref)
 must specify the final schema tree.  It is not easy to construct
 path expressions that are position-independent.
 
-If YANG was more object-oriented it would be easier to build
-and maintain reusable software that used the data models derived
-from the YANG modules.
+Readers and writers must attempt to understand a data model
+by following the groupings, while referencing YANG tree diagrams
+to understand the schema tree that would result from the
+expansionafter 'uses', 'augment', and 'deviation' statements
+are all considered.
 
+YANG would be much easier to use if readers and writers could
+work with the data model at the appropriate abstaction layer.
 
 
 Problems With Groupings

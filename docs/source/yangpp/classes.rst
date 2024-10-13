@@ -550,6 +550,33 @@ An instance of this class has the same properties as a container.
 If the base-class statement is not present and no :ref:`parent-class-stmt`
 is present, then this is the default base-class type used.
 
+A class definition defines a node in the schema tree,
+unlike a YANG 1.1 grouping.
+
+.. code-block:: yang
+
+    grouping data {
+       leaf leaf1 { type string; }
+       leaf leaf2 { type string; }
+    }
+
+    class data {
+       leaf leaf1 { type string; }
+       leaf leaf2 { type string; }
+    }
+
+    /* produces paths
+     *    ./leaf1
+     *    ./leaf2
+     */
+    uses data;
+
+    /* produces paths
+     *    ./data/leaf1
+     *    ./data/leaf2
+     */
+    uses-class data;
+
 
 
 message base-class
@@ -565,6 +592,28 @@ is for some sort of protocol message.
    and usage context associated with this class.
 
 
+.. code-block:: yang
+
+    class notification {
+      base-class message;
+
+      leaf eventTime {
+        type yang:date-and-time;
+        mandatory true;
+        description
+          "Timestamp from RFC 5277.";
+      }
+
+      any notification {
+        mandatory true;
+        description
+          "An abstract placeholder for a representation of
+           any notification-stmt.";
+      }
+    }
+
+
+
 structure base-class
 ++++++++++++++++++++++++++++
 
@@ -573,6 +622,20 @@ It corresponds to the 'sx:structure' schema node.
 
 -  An instance of this class has the same properties as an sx:structure.
 -  There are no semantics or usage context defined for this class
+
+
+.. code-block:: yang
+
+    class timestamp {
+      base-class structure;
+
+      leaf event-time {
+        type yang:date-and-time;
+      }
+      leaf event-id {
+        type string;
+      }
+    }
 
 
 
@@ -782,6 +845,47 @@ class being defined.
    removed from the class being defined.  Another derived class could
    support the virtual node.
 
+**Example: Map Virtual Actions to New Virtual Actions**
+
+A virtual node must be mapped to a concrete node to be usable
+in the schema tree. However, a derived class is also allowed
+to modify virtual nodes from the parent class to create new
+virtual nodes.
+
+
+.. code-block:: yang
+
+    class base-test {
+      virtual {
+        action <un-named-test>;
+        action named-test;
+      }
+    }
+
+    class test1-template {
+      parent-class base-test {
+        map-virtual un-named-test {
+          map-path my-base-test;
+       }
+      }
+
+      virtual {
+        // un-named-test modified and still un-named
+        action <my-base-test> {
+          input {
+            leaf id { type uint16; }
+          }
+        }
+
+        // named-test is still virtual
+        action named-test {
+          input {
+            leaf id { type uint16; }
+          }
+        }
+      }
+    }
+
 
 
 **map-virtual-stmt Substatements**
@@ -839,7 +943,7 @@ of the class.
 
 The virtual-stmt is not followed by any keyword.
 
--  Multiple virtual-stmt are allowed by no duplicate objects
+-  Multiple virtual-stmt are allowed but no duplicate objects
    can appear in any way.
 
 
@@ -1274,152 +1378,3 @@ a 'bind-class' statement must be provided:
         }
       }
     }
-
-
-
-
-
-
-
-YANG++ Class Examples
------------------------
-
-Template Example
-~~~~~~~~~~~~~~~~~~
-
-In this example, a bare-bones service template is defined
-that has 3 virtual members:
-
--  reset action
--  status action
--  config container
-
-**Example Base Class:**
-
-.. code-block:: yang
-
-    module base-service {
-      // ..
-
-      class base-service {
-       virtual {
-         // concrete class expected to map these 2 statements
-         // and provide names for these actions
-         action <reset>;
-         action <status>;
-
-         // concrete class expected to fill in this config container
-         // as needed and use the provided name 'config'
-         container config;
-       }
-     }
-
-    }
-
-
-
-**Example Module Defining a Derived Class:**
-
-.. code-block:: yang
-
-    module my-service {
-      import base-service { prefix base; }
-
-      class mybase-service {
-       parent-class base:base-service {
-         map-virtual <reset> {
-           map-path my-reset;
-         }
-         map-virtual <status> {
-           map-path my-status;
-         }
-       }
-
-       // local groupings work the same since the class root
-       // is a real container or list node
-       grouping status-parms {
-          leaf status {
-            type string;
-          }
-          leaf last-error {
-            type string;
-          }
-       }
-
-       // no virtual sections in this class makes it a concrete class
-       // a concrete definition for each 'virtual' definition is expected.
-       // if missing then a deviate (not-supported) is implied
-       action my-reset {
-         input {
-           leaf myparm1 { type string; }
-         }
-       }
-
-       action my-status {
-         output {
-           uses status-parms;
-         }
-       }
-
-       // this is a replacement of the virtual config
-       container config {
-         list list1 {
-           key name1;
-           leaf name1 { type string; }
-           leaf my-leaf2 { type string; }
-         }
-       }
-     }
-
-
-**Example Concrete Module Using The Base Class:**
-
-A top-level container name ``/mybase-service`` is created.
-
-.. code-block:: yang
-
-       module example-services {
-         // ...
-         import base-mod { prefix base; }
-
-         // top-level /mybase-service
-         uses-class base:base-service {
-           root-name mybase-service;
-         }
-       }
-
-**Example Objects For Derived Class:**
-
-In this example, the server maps implemented class 'mybase-service' to
-the specified (virtual) class 'base-service'.
-
-Real objects created in module 'example-services':
-
-.. code-block:: text
-
-    module: example-services
-      +--rw mybase-service
-         +---x my-reset
-         |  +---w input
-         |     +---w myparm1?   string
-         +---x my-status
-         |  +--ro output
-         |     +--ro status?       string
-         |     +--ro last-error?   string
-         +--rw config
-            +--rw list1* [name1]
-               +--rw name1       string
-               +--rw my-leaf2?   string
-
-
-**Example Translation to YANG 1.1 Module**
-
-A YANG 1.1 for the 'services' module is shown for
-the mapping to the implemented class 'mybase-service'.
-
-A generic module is not possible in this case since the
-specified class is also a virtual class.
-
-
-.. literalinclude:: example-services.yang
-   :language: yang

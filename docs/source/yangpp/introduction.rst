@@ -15,18 +15,24 @@ YANG++ Terminology
 
 -  **class**: a reusable set of YANG statements
 
+-  **class ID**: the module name and class identifier value for a class
+
 -  **base class**: a built-in base type, not defined with a class definition
 
 -  **class instance**: a data tree conforming to the conceptual schema node
    defined by the class
 
--  **class root**: the topmost data node and XPath document root for the class instance
+-  **class root**: the topmost data node and XPath document root for the
+   class instance
 
--  **concrete object**: an object that is not defined within a :ref:`virtual-stmt`
+-  **concrete class**: a class that does not contain any virtual objects.
+
+-  **concrete object**: an object that is not defined within
+   a :ref:`virtual-stmt`
 
 -  **derived class**: a class that has a parent-class
 
--  **implemented class**: the class used in the implementation
+-  **implemented class**: the concrete class used in the implementation
 
 -  **parent class**: the class that is inherited by a derived class
 
@@ -36,9 +42,11 @@ YANG++ Terminology
 
 -  **virtual class**: a class that contains any :ref:`virtual objects`
 
--  **virtual object**: a named object that is defined within a :ref:`virtual-stmt`
+-  **virtual object**: a named object that is defined within a
+   :ref:`virtual-stmt`
 
--  **virtual object template**: an un-named object that is defined within a :ref:`virtual-stmt`
+-  **virtual object template**: an un-named object that is defined within
+   a :ref:`virtual-stmt`
 
 
 YANG++ Design Goals
@@ -293,8 +301,19 @@ This requires some changes and improvements to the tools:
 
 -  Late assignment of the schema node name used for the class root.
    The :ref:`root-name-stmt` is used within the :ref:`uses-class-stmt`
-   for this purpose.
+   for this purpose.  The root-name is needed to use the same class
+   more than once as sibling nodes.
 
+   .. code-block:: yang
+
+        class envelope {
+          uses-class address {
+            root-name from-address;
+          }
+          uses-class address {
+            root-name to-address;
+        }
+      }
 
 
 Class Name Binding
@@ -368,6 +387,58 @@ If no class name binding is found then the specified class
 name is also the implemented class name.
 
 
+Class References
+---------------------------------
+
+A class reference is defined with the :ref:`classref-stmt`.
+It allows objects in other classes to be used in YANG validation
+statements (must, when, path) without knowing the final schema tree
+locations of the objects.
+
+References to objects in other classes should be done if possible
+to make the class as relocatable as possible.  However,
+traditional paths referencing the final schema tree are supported.
+
+A class is expected to "export" its class references using
+the :ref:`classref-stmt`. A separate statement is needed
+for each class instance used in a conceptual reference.
+
+A new syntax for a :ref:`class path string` can be used to reference
+conceptual instances of other classes. Each conceptual reference
+needs its own identifier. It is not enough to
+
+Example:
+
+.. code-block:: yang
+
+
+    class caps {
+      leaf max-widgets {
+        type uint32;
+        default 42;
+      }
+    }
+
+    // mod1 defines the system capabilities class
+    class system-caps {
+      parent-class caps;
+      // add more system caps
+    }
+
+    // mod2 defines the system config class
+    class system-config {
+      classref "mod1:system-caps::syscaps" {
+        description "Need to reference the system capabilities";
+      }
+
+      container mycaps {
+        leaf max-widgets {
+          must ". <= /mod1:system-caps::syscaps/max-widgets";
+          type uint32;
+        }
+      }
+    }
+
 
 
 
@@ -402,7 +473,7 @@ are expected to augment with 'case' statements.
 
 -  A concrete object cannot be changed to a virtual object in a derived class.
 
--  A virtual object cannot be mapped to another virtual object.
+-  A virtual object can be mapped to a new virtual object.
 
 -  If any virtual objects are not defined in the derived class
    then the derived class is also a virtual class.  The virtual
@@ -755,3 +826,30 @@ defined in the 'addr' module.
         }
       }
     }
+
+
+Path For Current Class
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A special shorthand string is available, similar to the 'this'
+pointer in C++.  This allows the class root to be easily
+referenced from anywhere within the class, so paths are
+simpler to use without mistakes.
+
+
+.. code-block:: text
+
+         '::/' [ path ]
+
+
+
+
+Examples:
+
+.. code-block:: text
+
+     ::/
+
+     ::/last-name
+
+     ::/top2/B

@@ -16,9 +16,9 @@ import sys
 
 # -- Project information -----------------------------------------------------
 
-project = "YumaPro"
+project = "YANG++"
 copyright = "2024, YumaWorks, Inc."
-author = "YumaWorks"
+author = "Andy Bierman"
 
 # The base version, including alpha/beta/rc tags
 version = "alpha1"
