@@ -492,11 +492,12 @@ are expected to augment with 'case' statements.
 
 -  TBD: complex nested templates with deep virtual objects
 
-Example: Abstract class represents a Contact entry in a phone book.
+
+**Example: Abstract class represents a contact entry in a phone book.**
 
 .. code-block:: yang
 
-   class ContactTemplate {
+   class contact-template {
      virtual {
        container <identity> {
          description
@@ -527,9 +528,9 @@ A derived class is needed which resolves the virtual objects.
 
 .. code-block:: yang
 
-    class Contact {
-      parent-class ContactTemplate {
-        map-virtual <identity> {
+    class contact {
+      parent-class contact-template {
+        map-virtual identity {
           map-path name;
         }
       }
@@ -552,7 +553,7 @@ configured to map the 'Contact' class to the 'ContactTemplate' class.
 .. code-block:: yang
 
     container sysadmin-contact {
-      uses-class ContactTemplate;
+      uses-class contact-template;
     }
 
 
@@ -561,12 +562,56 @@ A new abstract class can be created which uses this class:
 
 .. code-block:: yang
 
-    class ContactList {
-      list contacts {
-        autokey;
-        uses-class ContactTemplate;
+    class contacts {
+      autokey;
+      uses-class contact-template {
+        root-name contact;
       }
     }
+
+
+**Example: A virtual case within a concrete choice**
+
+.. code-block:: yang
+
+    class options {
+      virtual {
+        augment config/mand-choice {
+          case <mand-case>;
+        }
+      }
+
+      container config {
+        choice mand-choice {
+          mandatory true;
+        }
+      }
+    }
+
+In this example it is clear to developers and compilers
+that the model requires at least one case to be usable.
+
+
+.. code-block:: yang
+
+    class my-options {
+      parent-class options {
+        map-virtual mand-case {
+          map-path config/mand-choice/my-case;
+        }
+      }
+
+      container config {
+        choice mand-choice {
+          mandatory true;
+          case my-case {
+            leaf my-leaf { type string; }
+          }
+        }
+      }
+    }
+
+
 
 
 Class Root

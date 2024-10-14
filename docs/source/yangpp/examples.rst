@@ -50,10 +50,10 @@ Module Defining a Derived Class
 
       class mybase-service {
        parent-class base:base-service {
-         map-virtual <reset> {
+         map-virtual reset {
            map-path my-reset;
          }
-         map-virtual <status> {
+         map-virtual status {
            map-path my-status;
          }
        }
