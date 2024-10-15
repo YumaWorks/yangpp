@@ -576,7 +576,7 @@ A new abstract class can be created which uses this class:
 
     class options {
       virtual {
-        augment config/mand-choice {
+        augment "config/mand-choice" {
           case <mand-case>;
         }
       }
@@ -597,18 +597,16 @@ that the model requires at least one case to be usable.
     class my-options {
       parent-class options {
         map-virtual mand-case {
-          map-path config/mand-choice/my-case;
+          map-path "config/mand-choice/my-case";
         }
       }
 
-      container config {
-        choice mand-choice {
-          mandatory true;
-          case my-case {
-            leaf my-leaf { type string; }
-          }
+      augment "config/mand-choice" {
+        case my-case {
+          leaf my-leaf { type string; }
         }
       }
+
     }
 
 
