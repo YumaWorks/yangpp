@@ -19,7 +19,7 @@ The **class** statement is used like a grouping.
 It must be used somewhere in the schema tree to create accessible schema nodes,
 with the :ref:`uses-class-stmt`.
 
-Only
+
 **Usage**
 
 -  The :ref:`base-class-stmt` or :ref:`parent-class-stmt` can be present,

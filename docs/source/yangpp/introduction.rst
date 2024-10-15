@@ -390,9 +390,26 @@ name is also the implemented class name.
 Class References
 ---------------------------------
 
-A class reference is defined with the :ref:`classref-stmt`.
-It allows objects in other classes to be used in YANG validation
-statements (must, when, path) without knowing the final schema tree
+A class reference is defined with the :ref:`class path string`
+and exported from the class with a :ref:`classref-stmt`.
+
+TBD: decide if classref-stmt needed or rely on compilers
+to find all the class path strings.  It may be useful for documentation
+and instructions to YANG modelers needing to write the
+:ref:`uses-class-stmt` for the class with external references.
+
+There are two types of class references defined:
+
+-  **external class reference**: path string document root and context node
+   is the class root of the external class
+
+-  **current class reference**: path string document root and context node
+   is the class root of the current class
+
+
+An external class reference allows objects in other classes
+to be used in YANG validation statements (must, when, path)
+without knowing the final schema tree
 locations of the objects.
 
 References to objects in other classes should be done if possible
@@ -402,10 +419,6 @@ traditional paths referencing the final schema tree are supported.
 A class is expected to "export" its class references using
 the :ref:`classref-stmt`. A separate statement is needed
 for each class instance used in a conceptual reference.
-
-A new syntax for a :ref:`class path string` can be used to reference
-conceptual instances of other classes. Each conceptual reference
-needs its own identifier. It is not enough to
 
 Example:
 
