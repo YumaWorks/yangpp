@@ -390,7 +390,16 @@ name is also the implemented class name.
 Class References
 ---------------------------------
 
-A class reference is defined with the :ref:`classref-stmt`.
+A class reference is defined by using a :ref:`class path string`
+within an XPath expression (must, when) or a path expression (leafref).
+There are two types of class references defined:
+
+-  **external class reference**: path string document root and context node
+   is the class root of the external class
+
+-  **current class reference**: path string document root and context node
+   is the class root of the current class
+
 It allows objects in other classes to be used in YANG validation
 statements (must, when, path) without knowing the final schema tree
 locations of the objects.
@@ -399,13 +408,9 @@ References to objects in other classes should be done if possible
 to make the class as relocatable as possible.  However,
 traditional paths referencing the final schema tree are supported.
 
-A class is expected to "export" its class references using
-the :ref:`classref-stmt`. A separate statement is needed
-for each class instance used in a conceptual reference.
+A c:ref:`uses-class-stmt` is expected to bind all external class
+references, using the  the :ref:`bind-classref-stmt`.
 
-A new syntax for a :ref:`class path string` can be used to reference
-conceptual instances of other classes. Each conceptual reference
-needs its own identifier. It is not enough to
 
 Example:
 
@@ -427,10 +432,6 @@ Example:
 
     // mod2 defines the system config class
     class system-config {
-      classref "mod1:system-caps::syscaps" {
-        description "Need to reference the system capabilities";
-      }
-
       container mycaps {
         leaf max-widgets {
           must ". <= /mod1:system-caps::syscaps/max-widgets";
@@ -768,8 +769,12 @@ relative to the 'root' node.  Class path strings are
 not relative to the document root. Instead they are
 relative to the specified class reference point.
 
--  Use the :ref:`classref-stmt` in the :ref:`class-stmt`
+-  Use an external class reference path string
    to declare the reference point.
+-  The classref identifier must be unique within the class where it
+   is used, for each object that needs to be mapped, otherwise
+   a new classref identifier is not needed for each expression.
+
 -  Use the :ref:`bind-classref-stmt` in the :ref:`uses-class-stmt`
    to bind the reference point to the schema tree.
 
@@ -834,9 +839,6 @@ on the value of another leaf in 'class-A' from 'mod1'.
 
 
     class class-B {
-      classref "mod1:class-A::test" {
-        description "An example test reference point";
-      }
       container top2 {
         leaf B {
           when "/mod1:class-A::test/top/A > 10";
@@ -857,7 +859,6 @@ defined in the 'addr' module.
 .. code-block:: yang
 
     class person-name {
-      classref "addr:address:addr";
       leaf last {
         type leafref {
           path "addr:address::addr/last-name";

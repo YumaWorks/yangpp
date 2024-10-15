@@ -19,20 +19,12 @@ The **class** statement is used like a grouping.
 It must be used somewhere in the schema tree to create accessible schema nodes,
 with the :ref:`uses-class-stmt`.
 
-Only
+
 **Usage**
 
 -  The :ref:`base-class-stmt` or :ref:`parent-class-stmt` can be present,
    but not both.
 
--   A :ref:`classref-stmt` must be present for each external class
-    reference done within the class being defined.
--   A special path syntax identifying the reference point is used in
-    these statements:
-
-    - must-stmt
-    - when-stmt
-    - path-stmt
 
 
 **class-stmt Substatements**
@@ -60,10 +52,6 @@ Only
    * -  base-class
      -  :ref:`base-class-stmt`
      -  0..1
-
-   * -  classref
-     -  :ref:`classref-stmt`
-     -  0..N
 
    * -  data-def-stmt
      -  Several
@@ -151,7 +139,6 @@ The following ABNF is added to the YANG syntax:
                      [presence-stmt / key-stmt / autokey-stmt]
                      [base-class-stmt / parent-class-stmt]
                      *virtual-stmt
-                     *classref-stmt
                      *(typedef-stmt / grouping-stmt)
                      *(data-def-stmt / any-stmt)
                      *action-stmt
@@ -1042,75 +1029,6 @@ Example:
 
 
 
-
-
-
-
-
-classref-stmt
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This statement is required if the class references any other classes.
-Referencing a class does not alter the schema tree like using a class
-with :ref:`uses-class-stmt`.
-
-Class references can be used instead of absolute or relative schema tree
-references:
-
-- path-stmt
-- when-stmt
-- must-stmt
-
-Since a class can be used in multiple objects, a reference point
-is needed to identify each usage within the class being defined.
-Each 'classref' statement defines a reference point.
-The :ref:`class path string` is used to declare a reference point.
-
-
-
-**classref-stmt Substatements**
-
-.. list-table::
-   :header-rows: 1
-   :widths: 25 50 25
-
-   * -  substatement
-     -  section
-     -  cardinality
-
-   * -  description
-     -  :rfc:`7950#section-7.21.3`
-     -  0..1
-
-   * -  if-feature-stmt
-     -  :rfc:`7950#section-7.20.2`
-     -  0..n
-
-   * -  reference-stmt
-     -  :rfc:`7950#section-7.21.4`
-     -  0..1
-
-
-
-The following ABNF is added to the YANG syntax:
-
-.. code-block:: abnf
-
-    classref-stmt   = classref-keyword sep identifier-arg-str optsep
-                      (";" /
-                       "{" stmtsep
-                            ;; these stmts can appear in any order
-                            *if-feature-stmt
-                            [description-stmt]
-                            [reference-stmt]
-                        "}" ) stmtsep
-
-
-
-
-
-
-
 uses-class-stmt
 ---------------------
 
@@ -1259,8 +1177,8 @@ in a :ref:`class path string`.  A 'final use-class' must provide
 this information so all path referenced can be resolved within
 the real schema tree.
 
--  A corresponding :ref:`classref-stmt` must be found in the
-   class being used, or the binding cannot be completed.
+-  A corresponding :ref:`class path string` for an external class reference
+   must be found in the class being used, or the binding cannot be completed.
 
 
 .. container::
@@ -1347,10 +1265,6 @@ that validates fields against the push capabilities.
 .. code-block:: yang
 
     class push-settings {
-      classref "sys:push-caps::syscaps" {
-        description "System capabilities to use";
-      }
-
       leaf min-interval {
         type uint32;
         units centiseconds;
