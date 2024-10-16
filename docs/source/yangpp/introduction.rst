@@ -561,7 +561,7 @@ A derived class is needed which resolves the virtual objects.
     }
 
 In this example, a :ref:`class name binding` must be
-configured to map the 'Contact' class to the 'ContactTemplate' class.
+configured to map the 'Contact' class to the 'contact-template' class.
 
 .. code-block:: yang
 

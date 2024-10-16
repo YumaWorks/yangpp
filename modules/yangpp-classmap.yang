@@ -46,6 +46,27 @@
              "The identifier for the implemented class, defined within the
               module named by 'implemented-module'";
          }
+
+         list bind-classref {
+           description
+             "Any external class references in the implemented class
+              that are not in the specified class need to be mapped
+              to schema tree nodes in this list.";
+
+           key classref;
+           leaf classref {
+             type yang:yang-identifier;
+             description
+               "The classref identifier associated with this binding
+                in the implemented class.";
+           }
+           leaf map-path {
+             type string;
+             mandatory true;
+             description
+               "Schema node path binding for this class reference";
+           }
+         }
      }
 
      grouping yangpp-parms {

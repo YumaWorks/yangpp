@@ -89,3 +89,6 @@ Return Value:
 -  The value 0 is returned if the first node-set order is equal to the second node-set.
 
 -  The value 1 is returned if the first node-set is ordered after the second node-set.
+
+
+TBD: examples

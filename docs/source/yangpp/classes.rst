@@ -1267,8 +1267,10 @@ the real schema tree.
 
    .. note::
 
-      -  The :ref:`uses-class-stmt` can only safely provide refpoint
+      -  The :ref:`uses-class-stmt` can only safely provide classref
          bindings for the specified class, not the implemented class
+      -  It is expected that the YANG library will provide this
+         information for implemented classes.
       -  TBD: Additional or changed 'bind-classref' definitions
          in a different implemented class need to be handled somehow.
       -  TBD: Need to automatically-as-possible handle bindings

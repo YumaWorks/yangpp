@@ -20,6 +20,9 @@ for the server implementation.
               +--ro specified-class       yang:yang-identifier
               +--ro implemented-module    yang:yang-identifier
               +--ro implemented-class     yang:yang-identifier
+              +--ro bind-classref* [classref]
+                 +--ro classref    yang:yang-identifier
+                 +--ro map-path    string
 
 
 The module 'yangpp-classmap' defines a data structure
@@ -29,3 +32,6 @@ an implemented class ID.
 
 .. literalinclude:: ../../../modules/yangpp-classmap.yang
     :language: yang
+
+
+TBD: examples
