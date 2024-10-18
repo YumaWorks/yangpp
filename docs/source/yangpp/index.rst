@@ -2,6 +2,8 @@
 YANG++ Language
 ===================================
 
+DRAFT: Version 0.1.0
+
 .. toctree::
    :maxdepth: 3
 

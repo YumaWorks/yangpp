@@ -21,12 +21,10 @@ copyright = "2024, YumaWorks, Inc."
 author = "Andy Bierman"
 
 # The base version, including alpha/beta/rc tags
-version = "alpha1"
+version = "0.1.0"
 
 # The full version, including alpha/beta/rc tags
-# not going to mention release number in the title
-# this is the 22.10 release train documentation
-release = "alpha1"
+release = "0.1.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -106,4 +104,4 @@ smartquotes = False
 # pygments_style = 'sphinx'
 
 # -- Extension configuration -------------------------------------------------
-# pdf_documents = [('yumapro-netconfd-manual', u'netconfd', u'YumaPro netconfd-pro User Manual', u'YumaWorks, Inc.'),]
+# pdf_documents = []
