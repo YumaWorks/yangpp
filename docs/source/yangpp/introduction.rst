@@ -193,14 +193,26 @@ but needs deviations (e.g., remove an irrelevant leaf).
 
 The :ref:`YANG++ Standard Library` contains conceptual API
 definitions that allow basic operations on classes.
-
 There is one API defined at this time to :ref:`compare classes`.
+
+**Seamless Integration With YANG 1.1**
+
+Every statement in YANG 1.1 is supported in YANG++.
+YANG++ is designed to use YANG 1.1 directly, so it is easy
+to reuse existing YANG 1.1 modules.
+The XPath syntax is extended to support :ref:`class path string`
+syntax, but all existing XPath syntax is still valid.
+
 
 **Automatic Translation to YANG 1.1**
 
 It should be possible to define a standard :ref:`YANG 1.1 Translation`
 if all virtual objects are resolved and known to the compiler.
 Translation allows existing tools to be used with new YANG++ models.
+
+The :ref:`any-stmt` cannot be supported in YANG 1.1 since
+all YANG 1.1 nodes are named, and this statement is a placeholder template
+without an assigned name.
 
 
 New YANG Statements
