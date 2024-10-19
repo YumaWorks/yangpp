@@ -92,9 +92,9 @@ html_static_path = ["_static"]
 #     "css/custom.css",
 # ]
 
-html_show_sourcelink = False
+html_show_sourcelink = True
 
-html_copy_source = False
+html_copy_source = True
 
 # This setting if True causes double quotes to be changed to emquote
 smartquotes = False
