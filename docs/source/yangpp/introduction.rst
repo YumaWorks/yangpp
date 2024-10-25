@@ -214,6 +214,25 @@ The :ref:`any-stmt` cannot be supported in YANG 1.1 since
 all YANG 1.1 nodes are named, and this statement is a placeholder template
 without an assigned name.
 
+**Relationship to YANG Language Abstractions**
+
+There is existing work in this area in :rfc:`6095`.
+It contains a specification for a layered abstraction model,
+and a detailed example for chassis components.
+The YANG++ builds on this effort and addresses the
+reusability and integration aspects of YANG.
+
+The previous work was more focused on providing XML
+Schema Document (XSD) functionality by introducing complex types.
+YANG++ attempts to provide the layered abstraction capabilities
+with derived classes. :ref:`Virtual objects` are supported
+with more control over the model behavior.
+
+YANG++ does not provide any recursion features like :rfc:`6095`.
+This is very complex to implement and it cannot be supported in
+YANG. A final schema tree cannot be generated if a class or
+grouping uses itself, because this causes infinite depth.
+
 
 New YANG Statements
 ---------------------
